@@ -16,6 +16,10 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
   late TextEditingController _speakerController;
   late TextEditingController _timeController;
   late TextEditingController _locationController;
+  late TextEditingController _dayController;
+  late TextEditingController _trackController;
+  late TextEditingController _durationController;
+  late TextEditingController _descriptionController;
   late String _selectedColor;
 
   // Color options
@@ -35,6 +39,10 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
     _speakerController = TextEditingController(text: widget.talk?['speaker'] ?? '');
     _timeController = TextEditingController(text: widget.talk?['time'] ?? '');
     _locationController = TextEditingController(text: widget.talk?['location'] ?? '');
+    _dayController = TextEditingController(text: widget.talk?['day'] ?? '');
+    _trackController = TextEditingController(text: widget.talk?['track'] ?? '');
+    _durationController = TextEditingController(text: widget.talk?['duration'] ?? '');
+    _descriptionController = TextEditingController(text: widget.talk?['description'] ?? '');
     _selectedColor = widget.talk?['colorCode'] ?? '#FF5733';
   }
 
@@ -78,6 +86,17 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
                 },
               ),
               SizedBox(height: 16),
+              // Day field - new
+              TextFormField(
+                controller: _dayController,
+                decoration: InputDecoration(
+                  labelText: 'Day',
+                  border: OutlineInputBorder(),
+                  hintText: 'e.g. Monday',
+                ),
+              ),
+              SizedBox(height: 16),
+              // Time field
               TextFormField(
                 controller: _timeController,
                 decoration: InputDecoration(
@@ -105,6 +124,26 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
                   }
                   return null;
                 },
+              ),
+              SizedBox(height: 16),
+              // Duration field - new
+              TextFormField(
+                controller: _durationController,
+                decoration: InputDecoration(
+                  labelText: 'Duration',
+                  border: OutlineInputBorder(),
+                  hintText: 'e.g. 1 Hour',
+                ),
+              ),
+              SizedBox(height: 16),
+              // Track field - new
+              TextFormField(
+                controller: _trackController,
+                decoration: InputDecoration(
+                  labelText: 'Track',
+                  border: OutlineInputBorder(),
+                  hintText: 'e.g. Technical, Business',
+                ),
               ),
               SizedBox(height: 16),
               DropdownButtonFormField<String>(
@@ -138,6 +177,17 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
                   });
                 },
               ),
+              SizedBox(height: 16),
+              // Description field - new
+              TextFormField(
+                controller: _descriptionController,
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                  border: OutlineInputBorder(),
+                  alignLabelWithHint: true,
+                ),
+                maxLines: 5,
+              ),
               SizedBox(height: 24),
               ElevatedButton(
                 child: Padding(
@@ -153,6 +203,10 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
                           'speaker': _speakerController.text,
                           'time': _timeController.text,
                           'location': _locationController.text,
+                          'day': _dayController.text,
+                          'duration': _durationController.text,
+                          'track': _trackController.text,
+                          'description': _descriptionController.text,
                           'colorCode': _selectedColor,
                           'hasMissingRegistration': false,
                           'hasMissingCopyright': false,
@@ -163,6 +217,10 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
                           'speaker': _speakerController.text,
                           'time': _timeController.text,
                           'location': _locationController.text,
+                          'day': _dayController.text,
+                          'duration': _durationController.text,
+                          'track': _trackController.text,
+                          'description': _descriptionController.text,
                           'colorCode': _selectedColor,
                         };
                     
@@ -184,6 +242,10 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
     _speakerController.dispose();
     _timeController.dispose();
     _locationController.dispose();
+    _dayController.dispose();
+    _trackController.dispose();
+    _durationController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 }

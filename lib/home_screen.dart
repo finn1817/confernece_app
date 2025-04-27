@@ -9,7 +9,7 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final FirebaseService _firebaseService = FirebaseService();
   bool isAdmin = false;
   bool isLoading = true;
@@ -19,10 +19,37 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    // Register the observer for app lifecycle changes
+    WidgetsBinding.instance.addObserver(this);
+    _loadData();
+  }
+  
+  @override
+  void dispose() {
+    // Remove the observer when the screen is disposed
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+  
+  // This method is called when the app lifecycle state changes
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Refresh when the app comes back to the foreground
+    if (state == AppLifecycleState.resumed) {
+      _loadData();
+    }
+  }
+  
+  // This method is called when this route is pushed on top of another route
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     _loadData();
   }
   
   Future<void> _loadData() async {
+    if (!mounted) return;
+    
     setState(() {
       isLoading = true;
     });
@@ -31,17 +58,19 @@ class _HomeScreenState extends State<HomeScreen> {
       // Get the upcoming talks count
       final talks = await _firebaseService.getUpcomingTalks();
       
-      setState(() {
-        upcomingTalksCount = talks.length;
-        nextTalk = talks.isNotEmpty ? talks[0] : null;
-        isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
-      
       if (mounted) {
+        setState(() {
+          upcomingTalksCount = talks.length;
+          nextTalk = talks.isNotEmpty ? talks[0] : null;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+        
         CommonWidgets.showNotificationBanner(
           context, 
           message: 'Error loading data: $e',
@@ -133,7 +162,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           icon: Icons.event,
                           label: 'Schedule',
                           onTap: () {
+                            // Go to schedule screen and load data when returning
                             Navigator.pushNamed(context, AppRouter.schedule);
+                            // We'll rely on didChangeDependencies for refresh
                           },
                         ),
                         if (isAdmin)
@@ -190,6 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: InkWell(
         onTap: () {
+          // Navigate to talk detail
           AppRouter.navigateToTalkDetail(
             context,
             talk: talk,
@@ -199,6 +231,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _loadData(); // Refresh data after update
             },
           );
+          // didChangeDependencies will handle refresh when returning
         },
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -260,6 +293,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       _loadData(); // Refresh data after update
                     },
                   );
+                  // didChangeDependencies will handle refresh when returning
                 },
                 isOutlined: true,
               ),

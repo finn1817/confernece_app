@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_theme.dart';
 import 'widgets/common_widgets.dart';
+import 'services/firebase_service.dart';
 
 class TalkDetailScreen extends StatefulWidget {
   final Map<String, dynamic> talk;
@@ -20,6 +21,7 @@ class TalkDetailScreen extends StatefulWidget {
 class _TalkDetailScreenState extends State<TalkDetailScreen> {
   late Map<String, dynamic> talk;
   bool isEditing = false;
+  final FirebaseService _firebaseService = FirebaseService();
   
   // Controllers for editable fields
   late TextEditingController titleController;
@@ -86,6 +88,76 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
       isEditing = !isEditing;
     });
   }
+  
+  // Show delete confirmation dialog
+  Future<void> _showDeleteConfirmation() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) { // Use dialogContext instead of context
+        return AlertDialog(
+          title: Text('Delete Talk'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Are you sure you want to delete this talk?'),
+                SizedBox(height: 8),
+                Text(
+                  'This action cannot be undone.',
+                  style: TextStyle(
+                    fontStyle: FontStyle.italic,
+                    color: Colors.red[300],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // Use dialogContext
+              },
+            ),
+            TextButton(
+              child: Text(
+                'Delete',
+                style: TextStyle(color: Colors.red),
+              ),
+              onPressed: () {
+                // Delete the talk
+                _firebaseService.deleteTalk(talk['id']).then((_) {
+                  // First close the dialog
+                  Navigator.of(dialogContext).pop(); 
+                  
+                  // Then go back to previous screen
+                  Navigator.of(context).pop(true);  // Pass true to indicate deletion
+                  
+                  // Show confirmation
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Talk deleted successfully'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }).catchError((error) {
+                  // Close dialog on error too
+                  Navigator.of(dialogContext).pop();
+                  
+                  // Show error
+                  CommonWidgets.showNotificationBanner(
+                    context,
+                    message: 'Error deleting talk: $error',
+                    isError: true,
+                  );
+                });
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,11 +170,18 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
       appBar: AppBar(
         title: Text(isEditing ? 'Edit Talk' : 'Talk Details'),
         actions: [
-          if (widget.isAdmin)
+          if (widget.isAdmin) ...[
             IconButton(
               icon: Icon(isEditing ? Icons.save : Icons.edit),
               onPressed: _toggleEdit,
             ),
+            // Add delete button
+            if (!isEditing)
+              IconButton(
+                icon: Icon(Icons.delete),
+                onPressed: _showDeleteConfirmation,
+              ),
+          ],
         ],
       ),
       body: SingleChildScrollView(
