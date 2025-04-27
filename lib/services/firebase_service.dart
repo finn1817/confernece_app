@@ -17,6 +17,34 @@ class FirebaseService {
     });
   }
 
+  // Get upcoming talks (talks with timestamps in the future)
+  Future<List<Map<String, dynamic>>> getUpcomingTalks() async {
+    try {
+      // Get current time for comparison
+      final now = DateTime.now();
+      
+      final snapshot = await _firestore.collection(collection).get();
+      
+      // Filter and sort upcoming talks
+      final upcomingTalks = snapshot.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'id': doc.id,
+          ...data,
+        };
+      }).toList();
+      
+      // For now, just return all talks as "upcoming"
+      // In a real implementation, you would filter based on date/time fields
+      // When you add date fields to your talk objects, you can implement proper filtering
+      
+      return upcomingTalks;
+    } catch (e) {
+      print('Error getting upcoming talks: $e');
+      return [];
+    }
+  }
+
   // Add a new talk
   Future<DocumentReference> addTalk(Map<String, dynamic> talk) {
     // Remove the id if it exists before adding to Firestore

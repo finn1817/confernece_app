@@ -29,11 +29,15 @@ migrate_working_dir/
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
+<<<<<<< HEAD
 .packages
+=======
+>>>>>>> ce3bf1f4dd3ca7f38c55de412601287ab28d1f67
 .pub-cache/
 .pub/
 /build/
 
+<<<<<<< HEAD
 # Firebase
 google-services.json
 GoogleService-Info.plist
@@ -57,6 +61,8 @@ GoogleService-Info.plist
 # Web
 **/web/packages
 
+=======
+>>>>>>> ce3bf1f4dd3ca7f38c55de412601287ab28d1f67
 # Symbolication related
 app.*.symbols
 
