@@ -12,7 +12,20 @@
           "package_name": "com.example.conference_app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "846912321029-iu666qqc949j3ven09pb0nuvk2710f3h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.conference_app",
+            "certificate_hash": "b174dc9849a31d32469ab0a8b2393c730a2c0f77"
+          }
+        },
+        {
+          "client_id": "846912321029-vrofj8i6dpub5mnhn028lflqrkqkdglr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBjJovnr4beCwYjMW9VQRt1HgclytHPSJo"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "846912321029-vrofj8i6dpub5mnhn028lflqrkqkdglr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
