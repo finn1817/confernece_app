@@ -20,6 +20,7 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
   late TextEditingController _trackController;
   late TextEditingController _durationController;
   late TextEditingController _descriptionController;
+  late TextEditingController _attendeesController; // New field for attendees
   late String _selectedColor;
 
   // Color options
@@ -43,6 +44,7 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
     _trackController = TextEditingController(text: widget.talk?['track'] ?? '');
     _durationController = TextEditingController(text: widget.talk?['duration'] ?? '');
     _descriptionController = TextEditingController(text: widget.talk?['description'] ?? '');
+    _attendeesController = TextEditingController(text: widget.talk?['attendees'] ?? '');
     _selectedColor = widget.talk?['colorCode'] ?? '#FF5733';
   }
 
@@ -86,7 +88,17 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
                 },
               ),
               SizedBox(height: 16),
-              // Day field - new
+              // Attendees field - new
+              TextFormField(
+                controller: _attendeesController,
+                decoration: InputDecoration(
+                  labelText: 'Attendees',
+                  border: OutlineInputBorder(),
+                  hintText: 'e.g. John Doe, Jane Smith (comma separated)',
+                ),
+              ),
+              SizedBox(height: 16),
+              // Day field
               TextFormField(
                 controller: _dayController,
                 decoration: InputDecoration(
@@ -126,7 +138,7 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
                 },
               ),
               SizedBox(height: 16),
-              // Duration field - new
+              // Duration field
               TextFormField(
                 controller: _durationController,
                 decoration: InputDecoration(
@@ -136,7 +148,7 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
                 ),
               ),
               SizedBox(height: 16),
-              // Track field - new
+              // Track field
               TextFormField(
                 controller: _trackController,
                 decoration: InputDecoration(
@@ -178,7 +190,7 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
                 },
               ),
               SizedBox(height: 16),
-              // Description field - new
+              // Description field
               TextFormField(
                 controller: _descriptionController,
                 decoration: InputDecoration(
@@ -207,6 +219,7 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
                           'duration': _durationController.text,
                           'track': _trackController.text,
                           'description': _descriptionController.text,
+                          'attendees': _attendeesController.text.trim(), // Add attendees
                           'colorCode': _selectedColor,
                           'hasMissingRegistration': false,
                           'hasMissingCopyright': false,
@@ -221,6 +234,7 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
                           'duration': _durationController.text,
                           'track': _trackController.text,
                           'description': _descriptionController.text,
+                          'attendees': _attendeesController.text.trim(), // Add attendees
                           'colorCode': _selectedColor,
                         };
                     
@@ -246,6 +260,7 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
     _trackController.dispose();
     _durationController.dispose();
     _descriptionController.dispose();
+    _attendeesController.dispose(); // Dispose the new controller
     super.dispose();
   }
 }

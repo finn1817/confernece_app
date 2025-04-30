@@ -3,6 +3,7 @@ import 'app_theme.dart';
 import 'widgets/common_widgets.dart';
 import 'router.dart';
 import 'services/firebase_service.dart';
+import 'main.dart' as main;
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -21,7 +22,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.initState();
     // Register the observer for app lifecycle changes
     WidgetsBinding.instance.addObserver(this);
+    _checkAdminStatus();
     _loadData();
+  }
+  
+  void _checkAdminStatus() {
+    setState(() {
+      isAdmin = main.isAdminGlobal;
+    });
   }
   
   @override
@@ -36,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Refresh when the app comes back to the foreground
     if (state == AppLifecycleState.resumed) {
+      _checkAdminStatus();
       _loadData();
     }
   }
@@ -44,6 +53,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _checkAdminStatus();
     _loadData();
   }
   
@@ -80,6 +90,92 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
+  // Show login dialog for admin access
+  Future<void> _showLoginDialog() async {
+    if (isAdmin) {
+      // If already admin, log out
+      main.isAdminGlobal = false;
+      setState(() {
+        isAdmin = false;
+      });
+      CommonWidgets.showNotificationBanner(
+        context,
+        message: 'Logged out of admin mode',
+      );
+      return;
+    }
+    
+    // Show login dialog
+    final usernameController = TextEditingController();
+    final passwordController = TextEditingController();
+    
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text('Admin Login'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Please enter admin credentials'),
+                SizedBox(height: 16),
+                TextField(
+                  controller: usernameController,
+                  decoration: InputDecoration(
+                    labelText: 'Username',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                SizedBox(height: 16),
+                TextField(
+                  controller: passwordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Login'),
+              onPressed: () {
+                // Check credentials
+                if (main.checkAdminCredentials(usernameController.text, passwordController.text)) {
+                  main.isAdminGlobal = true;
+                  setState(() {
+                    isAdmin = true;
+                  });
+                  Navigator.of(dialogContext).pop();
+                  CommonWidgets.showNotificationBanner(
+                    context,
+                    message: 'Admin mode activated',
+                  );
+                } else {
+                  Navigator.of(dialogContext).pop();
+                  CommonWidgets.showNotificationBanner(
+                    context,
+                    message: 'Invalid credentials',
+                    isError: true,
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -88,15 +184,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         actions: [
           IconButton(
             icon: Icon(isAdmin ? Icons.admin_panel_settings : Icons.person),
-            onPressed: () {
-              setState(() {
-                isAdmin = !isAdmin;
-              });
-              CommonWidgets.showNotificationBanner(
-                context,
-                message: isAdmin ? 'Admin mode activated' : 'User mode activated',
-              );
-            },
+            onPressed: _showLoginDialog,
           ),
         ],
       ),
@@ -110,6 +198,32 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Admin badge if in admin mode
+                    if (isAdmin)
+                      Container(
+                        width: double.infinity,
+                        margin: EdgeInsets.only(bottom: 16),
+                        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppTheme.primaryColor),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.admin_panel_settings, color: AppTheme.primaryColor),
+                            SizedBox(width: 8),
+                            Text(
+                              'Admin Mode',
+                              style: AppTheme.bodyTextStyle.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    
                     // Welcome card
                     Card(
                       elevation: 4,
@@ -127,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'check out all curerent talks / events, create your schedule, and connect with other speakers in CSIT 425!',
+                              'Check out all current talks/events, create your schedule, and connect with other speakers in CSIT 425!',
                               style: AppTheme.bodyTextStyle,
                             ),
                           ],
@@ -212,6 +326,36 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ? Color(int.parse(talk['colorCode'].substring(1, 7), radix: 16) + 0xFF000000)
         : AppTheme.primaryColor;
     
+    // Attendee count badge
+    Widget attendeeBadge = Container();
+    if (talk.containsKey('attendees') && talk['attendees'] != null && talk['attendees'].toString().isNotEmpty) {
+      int count = talk['attendees'].toString().split(',').where((s) => s.trim().isNotEmpty).length;
+      if (count > 0) {
+        attendeeBadge = Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.people, size: 12, color: AppTheme.textSecondaryColor),
+              SizedBox(width: 4),
+              Text(
+                '$count attendees',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textSecondaryColor,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+    
     return Card(
       elevation: 3,
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -259,6 +403,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   const Icon(Icons.person, size: 16, color: AppTheme.textSecondaryColor),
                   const SizedBox(width: 4),
                   Text(talk['speaker'] ?? 'Unknown Speaker', style: AppTheme.smallTextStyle),
+                  if (talk.containsKey('attendees') && talk['attendees'] != null && talk['attendees'].toString().isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: attendeeBadge,
+                    ),
                 ],
               ),
               const SizedBox(height: 4),

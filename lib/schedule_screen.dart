@@ -4,6 +4,7 @@ import 'widgets/common_widgets.dart';
 import 'router.dart';
 import 'services/firebase_service.dart';
 import 'package:conference_app/app_theme.dart';
+import 'main.dart' as main;
 
 class ScheduleScreen extends StatefulWidget {
   @override
@@ -12,7 +13,6 @@ class ScheduleScreen extends StatefulWidget {
 
 class _ScheduleScreenState extends State<ScheduleScreen> {
   final FirebaseService _firebaseService = FirebaseService();
-  bool isAdmin = false;
   bool isLoading = true;
   List<Map<String, dynamic>> allTalks = [];
   List<Map<String, dynamic>> filteredTalks = [];
@@ -20,25 +20,38 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   // Filtering options
   String _selectedDay = 'All Days';
   String _selectedTrack = 'All Tracks';
+  String _selectedAttendee = 'All Attendees'; // New filter for attendees
   String _searchQuery = '';
   
   List<String> availableDays = ['All Days'];
   List<String> availableTracks = ['All Tracks'];
+  List<String> availableAttendees = ['All Attendees']; // New list for attendees
   
   @override
   void initState() {
     super.initState();
+    _checkAdminStatus();
     _loadTalks();
   }
   
+  // Admin status
+  bool isAdmin = false;
+  
+  void _checkAdminStatus() {
+    setState(() {
+      isAdmin = main.isAdminGlobal;
+    });
+  }
+
   void _loadTalks() {
     _firebaseService.getTalks().listen((talksList) {
       setState(() {
         allTalks = talksList;
         
-        // Extract available days and tracks for filtering
+        // Extract available days, tracks, and attendees for filtering
         Set<String> daysSet = {'All Days'};
         Set<String> tracksSet = {'All Tracks'};
+        Set<String> attendeesSet = {'All Attendees'};
         
         for (var talk in talksList) {
           if (talk.containsKey('day') && talk['day'] != null) {
@@ -47,10 +60,20 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           if (talk.containsKey('track') && talk['track'] != null) {
             tracksSet.add(talk['track']);
           }
+          
+          // Extract attendees from comma-separated list
+          if (talk.containsKey('attendees') && talk['attendees'] != null) {
+            String attendeesStr = talk['attendees'] as String;
+            if (attendeesStr.isNotEmpty) {
+              List<String> talkAttendees = attendeesStr.split(',').map((a) => a.trim()).where((a) => a.isNotEmpty).toList();
+              attendeesSet.addAll(talkAttendees);
+            }
+          }
         }
         
         availableDays = daysSet.toList()..sort();
         availableTracks = tracksSet.toList()..sort();
+        availableAttendees = attendeesSet.toList()..sort();
         
         _applyFilters();
         isLoading = false;
@@ -82,13 +105,22 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         bool matchesTrack = _selectedTrack == 'All Tracks' || 
                            talk['track'] == _selectedTrack;
         
+        // Apply attendee filter
+        bool matchesAttendee = _selectedAttendee == 'All Attendees';
+        if (!matchesAttendee && talk.containsKey('attendees') && talk['attendees'] != null) {
+          String attendeesStr = talk['attendees'] as String;
+          List<String> talkAttendees = attendeesStr.split(',').map((a) => a.trim()).toList();
+          matchesAttendee = talkAttendees.contains(_selectedAttendee);
+        }
+        
         // Apply search filter
         bool matchesSearch = _searchQuery.isEmpty || 
                            (talk['title']?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false) ||
                            (talk['speaker']?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false) ||
-                           (talk['description']?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
+                           (talk['description']?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false) ||
+                           (talk['attendees']?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
         
-        return matchesDay && matchesTrack && matchesSearch;
+        return matchesDay && matchesTrack && matchesAttendee && matchesSearch;
       }).toList();
       
       // Sort by time
@@ -115,17 +147,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       appBar: CommonWidgets.standardAppBar(
         title: 'Conference Schedule',
         actions: [
-          // Use a simple admin toggle for now (without the future builder)
           IconButton(
             icon: Icon(isAdmin ? Icons.admin_panel_settings : Icons.person),
             onPressed: () {
-              setState(() {
-                isAdmin = !isAdmin;
-              });
-              CommonWidgets.showNotificationBanner(
-                context,
-        message: isAdmin ? 'Admin mode activated' : 'User mode activated',
-              );
+              _showLoginDialog();
             },
           ),
         ],
@@ -147,6 +172,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                             setState(() {
                               _selectedDay = 'All Days';
                               _selectedTrack = 'All Tracks';
+                              _selectedAttendee = 'All Attendees';
                               _searchQuery = '';
                             });
                             _applyFilters();
@@ -210,6 +236,93 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
   
+  // Show login dialog for admin access
+  Future<void> _showLoginDialog() async {
+    if (isAdmin) {
+      // If already admin, log out
+      main.isAdminGlobal = false;
+      setState(() {
+        isAdmin = false;
+      });
+      CommonWidgets.showNotificationBanner(
+        context,
+        message: 'Logged out of admin mode',
+      );
+      return;
+    }
+    
+    // Show login dialog
+    final usernameController = TextEditingController();
+    final passwordController = TextEditingController();
+    
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text('Admin Login'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Please enter admin credentials'),
+                SizedBox(height: 16),
+                TextField(
+                  controller: usernameController,
+                  decoration: InputDecoration(
+                    labelText: 'Username',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                SizedBox(height: 16),
+                TextField(
+                  controller: passwordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Login'),
+              onPressed: () {
+                // Check credentials (hardcoded for now)
+                if (usernameController.text == 'Admin' && 
+                    passwordController.text == 'CSIT425') {
+                  main.isAdminGlobal = true;
+                  setState(() {
+                    isAdmin = true;
+                  });
+                  Navigator.of(dialogContext).pop();
+                  CommonWidgets.showNotificationBanner(
+                    context,
+                    message: 'Admin mode activated',
+                  );
+                } else {
+                  Navigator.of(dialogContext).pop();
+                  CommonWidgets.showNotificationBanner(
+                    context,
+                    message: 'Invalid credentials',
+                    isError: true,
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+  
   Widget _buildFilterBar() {
     return Container(
       padding: const EdgeInsets.all(8.0),
@@ -231,7 +344,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           
           const SizedBox(height: 8),
           
-          // Filter dropdowns
+          // Filter dropdowns - first row
           Row(
             children: [
               // Day filter
@@ -285,6 +398,30 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               ),
             ],
           ),
+          
+          const SizedBox(height: 8),
+          
+          // Attendee filter - second row
+          DropdownButtonFormField<String>(
+            decoration: const InputDecoration(
+              labelText: 'Attendee',
+              border: OutlineInputBorder(),
+              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            ),
+            value: _selectedAttendee,
+            items: availableAttendees.map((attendee) {
+              return DropdownMenuItem(
+                value: attendee,
+                child: Text(attendee, overflow: TextOverflow.ellipsis),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                _selectedAttendee = value!;
+              });
+              _applyFilters();
+            },
+          ),
         ],
       ),
     );
@@ -314,6 +451,36 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             ),
           )
         : const SizedBox.shrink();
+    
+    // Attendee count badge
+    Widget attendeeBadge = Container();
+    if (talk.containsKey('attendees') && talk['attendees'] != null && talk['attendees'].toString().isNotEmpty) {
+      int count = talk['attendees'].toString().split(',').where((s) => s.trim().isNotEmpty).length;
+      if (count > 0) {
+        attendeeBadge = Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.people, size: 12, color: AppTheme.textSecondaryColor),
+              SizedBox(width: 4),
+              Text(
+                count.toString(),
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textSecondaryColor,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    }
     
     return Card(
       elevation: 2,
@@ -395,6 +562,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                             ),
                             const SizedBox(width: 8),
                             trackTag,
+                            if (talk.containsKey('attendees') && talk['attendees'] != null && talk['attendees'].toString().isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: attendeeBadge,
+                              ),
                           ],
                         ),
                       ],

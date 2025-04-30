@@ -5,6 +5,9 @@ import 'router.dart';
 import 'home_screen.dart';
 import 'services/error_service.dart';
 
+// Global admin state
+bool isAdminGlobal = false;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -20,7 +23,12 @@ void main() async {
   }
 }
 
-class ConferenceApp extends StatelessWidget {
+class ConferenceApp extends StatefulWidget {
+  @override
+  _ConferenceAppState createState() => _ConferenceAppState();
+}
+
+class _ConferenceAppState extends State<ConferenceApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -28,6 +36,7 @@ class ConferenceApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       home: HomeScreen(),
       onGenerateRoute: AppRouter.generateRoute,
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -82,4 +91,9 @@ class ErrorApp extends StatelessWidget {
       ),
     );
   }
+}
+
+// Utility function to check admin credentials
+bool checkAdminCredentials(String username, String password) {
+  return username == 'Admin' && password == 'CSIT425';
 }

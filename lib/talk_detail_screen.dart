@@ -32,6 +32,7 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
   late TextEditingController trackController;
   late TextEditingController dayController;
   late TextEditingController durationController;
+  late TextEditingController attendeesController; // New controller for attendees
   
   @override
   void initState() {
@@ -47,6 +48,7 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
     trackController = TextEditingController(text: talk['track'] ?? '');
     dayController = TextEditingController(text: talk['day'] ?? '');
     durationController = TextEditingController(text: talk['duration'] ?? '');
+    attendeesController = TextEditingController(text: talk['attendees'] ?? ''); // Initialize attendees
   }
 
   @override
@@ -60,6 +62,7 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
     trackController.dispose();
     dayController.dispose();
     durationController.dispose();
+    attendeesController.dispose(); // Dispose attendees controller
     super.dispose();
   }
   
@@ -75,6 +78,7 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
         talk['track'] = trackController.text;
         talk['day'] = dayController.text;
         talk['duration'] = durationController.text;
+        talk['attendees'] = attendeesController.text.trim(); // Save attendees
         
         // Update via callback
         widget.onUpdate(talk);
@@ -249,6 +253,17 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
             ),
             
             const SizedBox(height: 16),
+
+            // Attendees - New field
+            _buildField(
+              label: 'Attendees',
+              value: talk['attendees'] ?? 'No attendees listed',
+              controller: attendeesController,
+              isEditing: isEditing,
+              icon: Icons.people,
+            ),
+            
+            const SizedBox(height: 16),
             
             // Schedule info row
             Row(
@@ -382,6 +397,7 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
                           trackController.text = widget.talk['track'] ?? '';
                           dayController.text = widget.talk['day'] ?? '';
                           durationController.text = widget.talk['duration'] ?? '';
+                          attendeesController.text = widget.talk['attendees'] ?? ''; // Reset attendees
                           
                           // Exit edit mode
                           isEditing = false;
