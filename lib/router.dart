@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'schedule_screen.dart';
-import 'talk_detail_screen.dart';
-import 'talk_form_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/schedule_screen.dart';
+import 'screens/talk_detail_screen.dart';
+import 'screens/talk_form_screen.dart';
 import 'widgets/common_widgets.dart';
 import 'main.dart' as main;
 

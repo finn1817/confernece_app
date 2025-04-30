@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'app_theme.dart';
-import 'widgets/common_widgets.dart';
-import 'services/firebase_service.dart';
+import 'package:conference_app/app_theme.dart';
+import 'package:conference_app/widgets/common_widgets.dart';
+import 'package:conference_app/services/firebase_service.dart';
 
 class TalkDetailScreen extends StatefulWidget {
   final Map<String, dynamic> talk;

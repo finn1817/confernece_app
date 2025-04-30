@@ -1,11 +1,9 @@
-// schedule_screen.dart
-
 import 'package:flutter/material.dart';
-import 'app_theme.dart';
-import 'widgets/common_widgets.dart';
-import 'router.dart';
-import 'services/firebase_service.dart';
-import 'main.dart' as main;
+import 'package:conference_app/app_theme.dart';
+import 'package:conference_app/widgets/common_widgets.dart';
+import 'package:conference_app/router.dart';
+import 'package:conference_app/services/firebase_service.dart';
+import 'package:conference_app/main.dart' as main;
 
 class ScheduleScreen extends StatefulWidget {
   @override
@@ -29,7 +27,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
   // Dropdown options
   List<String> availableDays = ['All Dates'];
-  List<String> availableTracks = ['All Subjects'];
+  List<String> availableTracks = ['All Tracks'];
   List<String> availableAttendees = ['All Attendees'];
 
   // Admin toggle

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'app_theme.dart';
-import 'widgets/common_widgets.dart';
-import 'router.dart';
-import 'services/firebase_service.dart';
-import 'main.dart' as main;
+import 'package:conference_app/app_theme.dart';
+import 'package:conference_app/widgets/common_widgets.dart';
+import 'package:conference_app/router.dart';
+import 'package:conference_app/services/firebase_service.dart';
+import 'package:conference_app/main.dart' as main;
 
 class HomeScreen extends StatefulWidget {
   @override

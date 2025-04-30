@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'app_theme.dart';
 import 'router.dart';
-import 'home_screen.dart';
+import 'screens/home_screen.dart';
 import 'services/error_service.dart';
 
 // Global admin state
