@@ -1,16 +1,73 @@
-# conference_app
+# **Conference Event App**
 
-A new Flutter project.
+**CSIT 425 – Software Engineering | Final Project**
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## Description
 
-A few resources to get you started if this is your first Flutter project:
+This is a Flutter made Android app for viewing, searching, filtering and managing conference talks or events in real time.  
+All data is stored in Firebase Cloud Database, and only admin users can log in to add or edit Events.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Prerequisites
+
+- Flutter SDK (greater than 3.0)  
+- either an Android emulator or real Android device
+- A Firebase project with **Cloud Firestore** enabled
+
+---
+
+## Setup & Run
+
+1. **Clone the repo**  
+   ```bash
+   git clone https://github.com/<your-org>/conference_event_app.git
+   cd conference_event_app
+
+2. **Add Firebase Packages to your Flutter Project**
+   ```bash
+   flutter pub add firestore_core
+   flutter pub add cloud_firestore
+
+3. **Install Dependencies**
+    ```bash
+    flutter pub get
+
+4. **Run on your Android Device**
+   ```bash
+   flutter run --release
+# How the database holds data for each Event
+- Every new event creates new instances in the database instantly upon creation.
+
+{\
+  "day":                   "Tuesday",\
+  "time":                  "11:00 AM",\
+  "duration":              "1 Hour, 20 Min",\
+  "title":                 "Class Time!",\
+  "speaker":               "Dr. Haider",\
+  "description":           "Not sure yet!",\
+  "location":              "Science Center",\
+  "track":                 "School",\
+  "attendees":             "Dan, Greg, Aurora, Jiwon",\
+  "colorCode":             "#FF5733",\
+}
+
+
+## Admin Mode
+- Implements all **CRUD** fearures, lets you add, remove, and edit all events and info in each event!
+
+---
+# This project is in the master branch, not the main!
+---
+
+## Authors
+
+- [@finn1817](https://www.github.com/finn1817)
+
+- [@grega1303](https://www.github.com/grega1303)
+
+- [@gome9667](https://www.github.com/gome9667)
+
+- [@midnightSnacking](https://www.github.com/midnightSnacking)
