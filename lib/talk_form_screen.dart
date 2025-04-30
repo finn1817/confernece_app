@@ -48,6 +48,21 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
     _selectedColor = widget.talk?['colorCode'] ?? '#FF5733';
   }
 
+  // Validate date format (00/00/00)
+  String? _validateDateFormat(String? value) {
+    if (value == null || value.isEmpty) {
+      return null; // Allow empty dates
+    }
+    
+    // Check if it matches the 00/00/00 format
+    RegExp dateRegex = RegExp(r'^\d{2}/\d{2}/\d{2}$');
+    if (!dateRegex.hasMatch(value)) {
+      return 'Please use format: 00/00/00';
+    }
+    
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,7 +83,7 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a title';
+                    return 'Please enter a title for the event';
                   }
                   return null;
                 },
@@ -77,38 +92,43 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
               TextFormField(
                 controller: _speakerController,
                 decoration: InputDecoration(
-                  labelText: 'Speaker',
+                  labelText: 'Host',
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a speaker name';
+                    return 'Please enter the hosts name';
                   }
                   return null;
                 },
               ),
               SizedBox(height: 16),
-              // Attendees field - new
+
+              // attendees field - newest
               TextFormField(
                 controller: _attendeesController,
                 decoration: InputDecoration(
-                  labelText: 'Attendees',
+                  labelText: 'Users Included',
                   border: OutlineInputBorder(),
-                  hintText: 'e.g. John Doe, Jane Smith (comma separated)',
+                  hintText: 'ex) John Doe, Jane Smith (comma separated)',
                 ),
               ),
               SizedBox(height: 16),
-              // Day field
+
+              // date field - with validation
               TextFormField(
                 controller: _dayController,
                 decoration: InputDecoration(
-                  labelText: 'Day',
+                  labelText: 'Date',
                   border: OutlineInputBorder(),
-                  hintText: 'e.g. Monday',
+                  hintText: 'ex) 00/00/00',
                 ),
+                validator: _validateDateFormat,
+                keyboardType: TextInputType.datetime,
               ),
               SizedBox(height: 16),
-              // Time field
+
+              // time
               TextFormField(
                 controller: _timeController,
                 decoration: InputDecoration(
@@ -148,22 +168,27 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
                 ),
               ),
               SizedBox(height: 16),
-              // Track field
+
+              // event subject
               TextFormField(
                 controller: _trackController,
                 decoration: InputDecoration(
-                  labelText: 'Track',
+                  labelText: 'Event Subject (known as its Track)',
                   border: OutlineInputBorder(),
-                  hintText: 'e.g. Technical, Business',
+                  hintText: 'ex) School, Work, etc... (can be anything!)',
                 ),
               ),
               SizedBox(height: 16),
+              
+              // Color dropdown - fixed to avoid duplicate values
               DropdownButtonFormField<String>(
                 decoration: InputDecoration(
                   labelText: 'Color Category',
                   border: OutlineInputBorder(),
                 ),
-                value: _selectedColor,
+                value: colorOptions.any((color) => color['code'] == _selectedColor) 
+                    ? _selectedColor 
+                    : colorOptions[0]['code'],
                 items: colorOptions.map((color) {
                   return DropdownMenuItem<String>(
                     value: color['code'],
@@ -184,17 +209,20 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
                   );
                 }).toList(),
                 onChanged: (value) {
-                  setState(() {
-                    _selectedColor = value!;
-                  });
+                  if (value != null) {
+                    setState(() {
+                      _selectedColor = value;
+                    });
+                  }
                 },
               ),
               SizedBox(height: 16),
-              // Description field
+
+              // description field
               TextFormField(
                 controller: _descriptionController,
                 decoration: InputDecoration(
-                  labelText: 'Description',
+                  labelText: 'Enter a description of your event here!',
                   border: OutlineInputBorder(),
                   alignLabelWithHint: true,
                 ),
