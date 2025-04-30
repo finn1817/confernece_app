@@ -25,11 +25,11 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
 
   // color options
   final List<Map<String, dynamic>> colorOptions = [
-    {'name': 'Red', 'code': '#FF5733'},
-    {'name': 'Green', 'code': '#33FF57'},
-    {'name': 'Blue', 'code': '#3357FF'},
-    {'name': 'Purple', 'code': '#8333FF'},
-    {'name': 'Orange', 'code': '#FF8C33'},
+    {'name': 'Red - Issues', 'code': '#FF5733'},
+    {'name': 'Green - Meetings', 'code': '#33FF57'},
+    {'name': 'Blue - Projects', 'code': '#3357FF'},
+    {'name': 'Purple - Activities', 'code': '#8333FF'},
+    {'name': 'Orange - Other Events', 'code': '#FF8C33'},
   ];
 
   @override
