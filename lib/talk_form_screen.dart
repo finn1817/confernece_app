@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class TalkFormScreen extends StatefulWidget {
   final Function(Map<String, dynamic>) onSave;
-  final Map<String, dynamic>? talk; // Optional talk for editing
+  final Map<String, dynamic>? talk; // optional talk for editing
 
   TalkFormScreen({required this.onSave, this.talk});
 
@@ -20,10 +20,10 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
   late TextEditingController _trackController;
   late TextEditingController _durationController;
   late TextEditingController _descriptionController;
-  late TextEditingController _attendeesController; // New field for attendees
+  late TextEditingController _attendeesController; // newest field we added for users (we call them meeting attendees
   late String _selectedColor;
 
-  // Color options
+  // color options
   final List<Map<String, dynamic>> colorOptions = [
     {'name': 'Red', 'code': '#FF5733'},
     {'name': 'Green', 'code': '#33FF57'},
@@ -35,7 +35,7 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize controllers with existing values if editing
+    // initialize controllers with existing values if editing
     _titleController = TextEditingController(text: widget.talk?['title'] ?? '');
     _speakerController = TextEditingController(text: widget.talk?['speaker'] ?? '');
     _timeController = TextEditingController(text: widget.talk?['time'] ?? '');
@@ -48,13 +48,13 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
     _selectedColor = widget.talk?['colorCode'] ?? '#FF5733';
   }
 
-  // Validate date format (00/00/00)
+  // validate date format (00/00/00)
   String? _validateDateFormat(String? value) {
     if (value == null || value.isEmpty) {
-      return null; // Allow empty dates
+      return null; // allow empty dates
     }
     
-    // Check if it matches the 00/00/00 format
+    // check if it matches the 00/00/00 format
     RegExp dateRegex = RegExp(r'^\d{2}/\d{2}/\d{2}$');
     if (!dateRegex.hasMatch(value)) {
       return 'Please use format: 00/00/00';
@@ -121,7 +121,7 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
                 decoration: InputDecoration(
                   labelText: 'Date',
                   border: OutlineInputBorder(),
-                  hintText: 'ex) 00/00/00 - Month/Date/Year',
+                  hintText: 'ex) 01/01/25 Month/Date/Year',
                 ),
                 validator: _validateDateFormat,
                 keyboardType: TextInputType.datetime,
