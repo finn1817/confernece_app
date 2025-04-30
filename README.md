@@ -57,6 +57,11 @@ All data is stored in Firebase Cloud Database, and only admin users can log in t
 
 ## Admin Mode
 - Implements all **CRUD** fearures, lets you add, remove, and edit all events and info in each event!
+
+---
+# This project is in the master branch, not the main!
+---
+
 ## Authors
 
 - [@finn1817](https://www.github.com/finn1817)
