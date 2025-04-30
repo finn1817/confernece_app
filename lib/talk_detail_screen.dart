@@ -23,7 +23,7 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
   bool isEditing = false;
   final FirebaseService _firebaseService = FirebaseService();
   
-  // Controllers for editable fields
+  // all controllers for the edit fields in the app
   late TextEditingController titleController;
   late TextEditingController speakerController;
   late TextEditingController descriptionController;
@@ -32,14 +32,14 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
   late TextEditingController trackController;
   late TextEditingController dayController;
   late TextEditingController durationController;
-  late TextEditingController attendeesController; // New controller for attendees
+  late TextEditingController attendeesController; // newest database add - for attendees (users)
   
   @override
   void initState() {
     super.initState();
     talk = Map<String, dynamic>.from(widget.talk);
     
-    // Initialize controllers with existing values
+    // start the controllers with these existing values
     titleController = TextEditingController(text: talk['title'] ?? '');
     speakerController = TextEditingController(text: talk['speaker'] ?? '');
     descriptionController = TextEditingController(text: talk['description'] ?? '');
@@ -48,12 +48,12 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
     trackController = TextEditingController(text: talk['track'] ?? '');
     dayController = TextEditingController(text: talk['day'] ?? '');
     durationController = TextEditingController(text: talk['duration'] ?? '');
-    attendeesController = TextEditingController(text: talk['attendees'] ?? ''); // Initialize attendees
+    attendeesController = TextEditingController(text: talk['attendees'] ?? ''); // start call on attendees
   }
 
   @override
   void dispose() {
-    // Dispose controllers
+    // clear old data from controllers
     titleController.dispose();
     speakerController.dispose();
     descriptionController.dispose();
@@ -62,14 +62,14 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
     trackController.dispose();
     dayController.dispose();
     durationController.dispose();
-    attendeesController.dispose(); // Dispose attendees controller
+    attendeesController.dispose();
     super.dispose();
   }
   
   void _toggleEdit() {
     setState(() {
       if (isEditing) {
-        // Save changes before exiting edit mode
+        // save feature before exiting edit mode
         talk['title'] = titleController.text;
         talk['speaker'] = speakerController.text;
         talk['description'] = descriptionController.text;
@@ -78,9 +78,9 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
         talk['track'] = trackController.text;
         talk['day'] = dayController.text;
         talk['duration'] = durationController.text;
-        talk['attendees'] = attendeesController.text.trim(); // Save attendees
+        talk['attendees'] = attendeesController.text.trim();
         
-        // Update via callback
+        // update widget through callback
         widget.onUpdate(talk);
         
         CommonWidgets.showNotificationBanner(
@@ -93,12 +93,12 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
     });
   }
   
-  // Show delete confirmation dialog
+  // show the delete confirmation log at the bottom of the app when used
   Future<void> _showDeleteConfirmation() async {
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext dialogContext) { // Use dialogContext instead of context
+      builder: (BuildContext dialogContext) { // used dialogContext instead of context for packaging
         return AlertDialog(
           title: Text('Delete Talk'),
           content: SingleChildScrollView(
@@ -120,7 +120,7 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
             TextButton(
               child: Text('Cancel'),
               onPressed: () {
-                Navigator.of(dialogContext).pop(); // Use dialogContext
+                Navigator.of(dialogContext).pop();
               },
             ),
             TextButton(
@@ -129,15 +129,15 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
                 style: TextStyle(color: Colors.red),
               ),
               onPressed: () {
-                // Delete the talk
+                // delete the event
                 _firebaseService.deleteTalk(talk['id']).then((_) {
-                  // First close the dialog
+                  // first the app closes the dialog
                   Navigator.of(dialogContext).pop(); 
                   
-                  // Then go back to previous screen
-                  Navigator.of(context).pop(true);  // Pass true to indicate deletion
+                  // then the app navigates back to previous screen
+                  Navigator.of(context).pop(true);  // The app passes true to show the delete feature worked
                   
-                  // Show confirmation
+                  // shows the confirmation to the user
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Talk deleted successfully'),
@@ -145,10 +145,10 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
                     ),
                   );
                 }).catchError((error) {
-                  // Close dialog on error too
+                  // close dialogContext on error too
                   Navigator.of(dialogContext).pop();
                   
-                  // Show error
+                  // Show error (if there is an error)
                   CommonWidgets.showNotificationBanner(
                     context,
                     message: 'Error deleting talk: $error',
@@ -165,7 +165,7 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Convert color code string to Color if it exists
+    // Convert color code string to Color if it exists (Thought out, not coded in, works but doesn't have purpose) (Used AI)
     Color talkColor = talk.containsKey('colorCode')
         ? Color(int.parse(talk['colorCode'].substring(1, 7), radix: 16) + 0xFF000000)
         : AppTheme.primaryColor;
@@ -179,7 +179,7 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
               icon: Icon(isEditing ? Icons.save : Icons.edit),
               onPressed: _toggleEdit,
             ),
-            // Add delete button
+            // add the delete button
             if (!isEditing)
               IconButton(
                 icon: Icon(Icons.delete),
@@ -338,7 +338,7 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
             
             const SizedBox(height: 24),
             
-            // Description
+            // info / description
             _buildField(
               label: 'Description',
               value: talk['description'] ?? 'No description available',
