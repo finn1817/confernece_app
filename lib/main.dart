@@ -1,24 +1,26 @@
+// lib/main.dart
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'app_theme.dart';
 import 'router.dart';
 import 'screens/home_screen.dart';
 import 'services/error_service.dart';
+import 'services/firebase_service.dart';
+import 'models/user.dart';
 
-// Global admin state
+// Global admin flag
 bool isAdminGlobal = false;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize error handling
-  final errorService = ErrorService();
-  
+  final errSvc = ErrorService();
+
   try {
     await Firebase.initializeApp();
     runApp(ConferenceApp());
-  } catch (e, stackTrace) {
-    errorService.logError('Failed to initialize app', e, stackTrace);
+  } catch (e, st) {
+    errSvc.logError('Failed to initialize app', e, st);
     runApp(ErrorApp(error: e.toString()));
   }
 }
@@ -43,28 +45,21 @@ class _ConferenceAppState extends State<ConferenceApp> {
 
 class ErrorApp extends StatelessWidget {
   final String error;
-  
-  const ErrorApp({required this.error});
-  
+  const ErrorApp({ required this.error });
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Conference App Error',
-      theme: ThemeData(
-        primarySwatch: Colors.red,
-      ),
+      theme: ThemeData(primarySwatch: Colors.red),
       home: Scaffold(
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.error_outline,
-                  color: Colors.red,
-                  size: 60,
-                ),
+                const Icon(Icons.error_outline, color: Colors.red, size: 60),
                 const SizedBox(height: 20),
                 const Text(
                   'Failed to start the app',
@@ -80,7 +75,7 @@ class ErrorApp extends StatelessWidget {
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    // This would restart the app in a real scenario
+                    // Could retry initialization here
                   },
                   child: const Text('Retry'),
                 ),
@@ -93,7 +88,18 @@ class ErrorApp extends StatelessWidget {
   }
 }
 
-// Utility function to check admin credentials
-bool checkAdminCredentials(String username, String password) {
-  return username == 'Admin' && password == 'CSIT425';
+/// Attempts to log in an admin via Firestore.
+/// Returns true if credentials match a user with isAdmin == 1.
+Future<bool> loginAdmin(String username, String password) async {
+  final user = await FirebaseService().authenticate(username, password);
+  if (user != null && user.isAdmin) {
+    isAdminGlobal = true;
+    return true;
+  }
+  return false;
+}
+
+/// Logs out the current admin.
+void logoutAdmin() {
+  isAdminGlobal = false;
 }

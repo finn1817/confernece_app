@@ -1,3 +1,5 @@
+// lib/screens/home_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:conference_app/app_theme.dart';
 import 'package:conference_app/widgets/common_widgets.dart';
@@ -16,122 +18,104 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool isLoading = true;
   int upcomingTalksCount = 0;
   Map<String, dynamic>? nextTalk;
-  
+
   @override
   void initState() {
     super.initState();
-    // Register the observer for app lifecycle changes
     WidgetsBinding.instance.addObserver(this);
     _checkAdminStatus();
     _loadData();
   }
-  
-  void _checkAdminStatus() {
-    setState(() {
-      isAdmin = main.isAdminGlobal;
-    });
-  }
-  
+
   @override
   void dispose() {
-    // Remove the observer when the screen is disposed
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
-  
-  // This method is called when the app lifecycle state changes
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Refresh when the app comes back to the foreground
     if (state == AppLifecycleState.resumed) {
       _checkAdminStatus();
       _loadData();
     }
   }
-  
-  // This method is called when this route is pushed on top of another route
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _checkAdminStatus();
     _loadData();
   }
-  
+
+  void _checkAdminStatus() {
+    setState(() {
+      isAdmin = main.isAdminGlobal;
+    });
+  }
+
   Future<void> _loadData() async {
     if (!mounted) return;
-    
-    setState(() {
-      isLoading = true;
-    });
-    
+
+    setState(() => isLoading = true);
+
     try {
-      // Get the upcoming talks count
       final talks = await _firebaseService.getUpcomingTalks();
-      
-      if (mounted) {
-        setState(() {
-          upcomingTalksCount = talks.length;
-          nextTalk = talks.isNotEmpty ? talks[0] : null;
-          isLoading = false;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        upcomingTalksCount = talks.length;
+        nextTalk = talks.isNotEmpty ? talks[0] : null;
+        isLoading = false;
+      });
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-        
-        CommonWidgets.showNotificationBanner(
-          context, 
-          message: 'Error loading data: $e',
-          isError: true,
-        );
-      }
+      if (!mounted) return;
+      setState(() => isLoading = false);
+      CommonWidgets.showNotificationBanner(
+        context,
+        message: 'Error loading data: $e',
+        isError: true,
+      );
     }
   }
 
-  // Show login dialog for admin access
   Future<void> _showLoginDialog() async {
     if (isAdmin) {
-      // If already admin, log out
-      main.isAdminGlobal = false;
-      setState(() {
-        isAdmin = false;
-      });
+      // log out via helper
+      main.logoutAdmin();
+      setState(() => isAdmin = false);
       CommonWidgets.showNotificationBanner(
         context,
         message: 'Logged out of admin mode',
       );
       return;
     }
-    
-    // Show login dialog
+
     final usernameController = TextEditingController();
     final passwordController = TextEditingController();
-    
-    return showDialog<void>(
+
+    await showDialog<void>(
       context: context,
       barrierDismissible: true,
-      builder: (BuildContext dialogContext) {
+      builder: (dialogContext) {
         return AlertDialog(
-          title: Text('Admin Login'),
+          title: const Text('Admin Login'),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                Text('Please enter admin credentials'),
-                SizedBox(height: 16),
+                const Text('Please enter admin credentials'),
+                const SizedBox(height: 16),
                 TextField(
                   controller: usernameController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Username',
                     border: OutlineInputBorder(),
                   ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 TextField(
                   controller: passwordController,
                   obscureText: true,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Password',
                     border: OutlineInputBorder(),
                   ),
@@ -141,27 +125,24 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('Cancel'),
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(dialogContext).pop(),
             ),
             TextButton(
-              child: Text('Login'),
-              onPressed: () {
-                // Check credentials
-                if (main.checkAdminCredentials(usernameController.text, passwordController.text)) {
-                  main.isAdminGlobal = true;
-                  setState(() {
-                    isAdmin = true;
-                  });
-                  Navigator.of(dialogContext).pop();
+              child: const Text('Login'),
+              onPressed: () async {
+                final success = await main.loginAdmin(
+                  usernameController.text.trim(),
+                  passwordController.text,
+                );
+                Navigator.of(dialogContext).pop();
+                if (success) {
+                  setState(() => isAdmin = true);
                   CommonWidgets.showNotificationBanner(
                     context,
                     message: 'Admin mode activated',
                   );
                 } else {
-                  Navigator.of(dialogContext).pop();
                   CommonWidgets.showNotificationBanner(
                     context,
                     message: 'Invalid credentials',
@@ -198,12 +179,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Admin badge if in admin mode
                     if (isAdmin)
                       Container(
                         width: double.infinity,
-                        margin: EdgeInsets.only(bottom: 16),
-                        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 16),
                         decoration: BoxDecoration(
                           color: AppTheme.primaryColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
@@ -211,8 +192,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.admin_panel_settings, color: AppTheme.primaryColor),
-                            SizedBox(width: 8),
+                            Icon(Icons.admin_panel_settings,
+                                color: AppTheme.primaryColor),
+                            const SizedBox(width: 8),
                             Text(
                               'Admin Mode',
                               style: AppTheme.bodyTextStyle.copyWith(
@@ -223,8 +205,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           ],
                         ),
                       ),
-                    
-                    // Welcome card
+
                     Card(
                       elevation: 4,
                       shape: RoundedRectangleBorder(
@@ -248,13 +229,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 24),
-                    
-                    // Upcoming talks section
                     Text('Upcoming Talks', style: AppTheme.subheadingStyle),
                     const SizedBox(height: 8),
-                    
+
                     if (nextTalk != null)
                       _buildNextTalkCard(nextTalk!)
                     else
@@ -262,13 +241,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         message: 'No upcoming talks scheduled',
                         icon: Icons.event_busy,
                       ),
-                    
+
                     const SizedBox(height: 24),
-                    
-                    // Quick actions
                     Text('Quick Actions', style: AppTheme.subheadingStyle),
                     const SizedBox(height: 8),
-                    
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
@@ -276,9 +253,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           icon: Icons.event,
                           label: 'Schedule',
                           onTap: () {
-                            // Go to schedule screen and load data when returning
-                            Navigator.pushNamed(context, AppRouter.schedule);
-                            // We'll rely on didChangeDependencies for refresh
+                            Navigator.pushNamed(
+                                context, AppRouter.schedule);
                           },
                         ),
                         if (isAdmin)
@@ -289,16 +265,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               AppRouter.navigateToTalkForm(
                                 context,
                                 onSave: (newTalk) {
-                                  _firebaseService.addTalk(newTalk).then((_) {
+                                  _firebaseService
+                                      .addTalk(newTalk)
+                                      .then((_) {
                                     CommonWidgets.showNotificationBanner(
                                       context,
                                       message: 'New talk added',
                                     );
-                                    _loadData(); // Refresh data
+                                    _loadData();
                                   }).catchError((error) {
                                     CommonWidgets.showNotificationBanner(
                                       context,
-                                      message: 'Error adding talk: $error',
+                                      message:
+                                          'Error adding talk: $error',
                                       isError: true,
                                     );
                                   });
@@ -313,49 +292,72 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         ),
                       ],
                     ),
+
+                    // Add Manage Users button at bottom if admin
+                    if (isAdmin) ...[
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.supervised_user_circle),
+                          label: const Text('Manage Users'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 14),
+                            textStyle: AppTheme.bodyTextStyle.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          onPressed: () {
+                            AppRouter.navigateToUserManagement(context);
+                          },
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ),
     );
   }
-  
+
   Widget _buildNextTalkCard(Map<String, dynamic> talk) {
-    // Convert color code string to Color if it exists
-    Color talkColor = talk.containsKey('colorCode')
-        ? Color(int.parse(talk['colorCode'].substring(1, 7), radix: 16) + 0xFF000000)
+    final talkColor = talk.containsKey('colorCode')
+        ? Color(
+            int.parse(talk['colorCode'].substring(1), radix: 16) |
+                0xFF000000)
         : AppTheme.primaryColor;
-    
-    // Attendee count badge
-    Widget attendeeBadge = Container();
-    if (talk.containsKey('attendees') && talk['attendees'] != null && talk['attendees'].toString().isNotEmpty) {
-      int count = talk['attendees'].toString().split(',').where((s) => s.trim().isNotEmpty).length;
-      if (count > 0) {
-        attendeeBadge = Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.people, size: 12, color: AppTheme.textSecondaryColor),
-              SizedBox(width: 4),
-              Text(
-                '$count attendees',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textSecondaryColor,
-                ),
-              ),
-            ],
-          ),
-        );
-      }
+
+    Widget attendeeBadge = const SizedBox.shrink();
+    if (talk.containsKey('attendees') &&
+        (talk['attendees'] as String).isNotEmpty) {
+      final count = (talk['attendees'] as String)
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .length;
+      attendeeBadge = Container(
+        padding:
+            const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.people,
+                size: 12, color: AppTheme.textSecondaryColor),
+            const SizedBox(width: 4),
+            Text('$count attendees',
+                style: const TextStyle(
+                    fontSize: 10, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      );
     }
-    
+
     return Card(
       elevation: 3,
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -365,17 +367,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ),
       child: InkWell(
         onTap: () {
-          // Navigate to talk detail
           AppRouter.navigateToTalkDetail(
             context,
             talk: talk,
             isAdmin: isAdmin,
             onUpdate: (updatedTalk) {
-              _firebaseService.updateTalk(updatedTalk['id'], updatedTalk);
-              _loadData(); // Refresh data after update
+              _firebaseService
+                  .updateTalk(updatedTalk['id'], updatedTalk);
+              _loadData();
             },
           );
-          // didChangeDependencies will handle refresh when returning
         },
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -383,7 +384,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment:
+                    MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: Text(
@@ -393,19 +395,29 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       maxLines: 2,
                     ),
                   ),
-                  if (isAdmin && (talk['hasMissingRegistration'] ?? false || talk['hasMissingCopyright'] ?? false))
-                    const Icon(Icons.warning, color: AppTheme.warningColor),
+                  if (isAdmin &&
+                      ((talk['hasMissingRegistration'] ??
+                              false) ||
+                          (talk['hasMissingCopyright'] ??
+                              false)))
+                    const Icon(Icons.warning,
+                        color: AppTheme.warningColor),
                 ],
               ),
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(Icons.person, size: 16, color: AppTheme.textSecondaryColor),
+                  const Icon(Icons.person,
+                      size: 16,
+                      color:
+                          AppTheme.textSecondaryColor),
                   const SizedBox(width: 4),
-                  Text(talk['speaker'] ?? 'Unknown Speaker', style: AppTheme.smallTextStyle),
-                  if (talk.containsKey('attendees') && talk['attendees'] != null && talk['attendees'].toString().isNotEmpty)
+                  Text(talk['speaker'] ?? 'Unknown Speaker',
+                      style: AppTheme.smallTextStyle),
+                  if (attendeeBadge is! SizedBox)
                     Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
+                      padding:
+                          const EdgeInsets.only(left: 8),
                       child: attendeeBadge,
                     ),
                 ],
@@ -413,18 +425,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               const SizedBox(height: 4),
               Row(
                 children: [
-                  const Icon(Icons.access_time, size: 16, color: AppTheme.textSecondaryColor),
+                  const Icon(Icons.access_time,
+                      size: 16,
+                      color:
+                          AppTheme.textSecondaryColor),
                   const SizedBox(width: 4),
-                  Text(talk['time'] ?? 'TBD', style: AppTheme.smallTextStyle),
+                  Text(talk['time'] ?? 'TBD',
+                      style: AppTheme.smallTextStyle),
                   const SizedBox(width: 16),
-                  const Icon(Icons.location_on, size: 16, color: AppTheme.textSecondaryColor),
+                  const Icon(Icons.location_on,
+                      size: 16,
+                      color:
+                          AppTheme.textSecondaryColor),
                   const SizedBox(width: 4),
-                  Text(talk['location'] ?? 'TBD', style: AppTheme.smallTextStyle),
+                  Text(talk['location'] ?? 'TBD',
+                      style: AppTheme.smallTextStyle),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
-                talk['description'] ?? 'No description available',
+                talk['description'] ??
+                    'No description available',
                 style: AppTheme.bodyTextStyle,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -438,11 +459,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     talk: talk,
                     isAdmin: isAdmin,
                     onUpdate: (updatedTalk) {
-                      _firebaseService.updateTalk(updatedTalk['id'], updatedTalk);
-                      _loadData(); // Refresh data after update
+                      _firebaseService.updateTalk(
+                          updatedTalk['id'], updatedTalk);
+                      _loadData();
                     },
                   );
-                  // didChangeDependencies will handle refresh when returning
                 },
                 isOutlined: true,
               ),
@@ -452,27 +473,26 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ),
     );
   }
-  
+
   Widget _buildActionButton({
     required IconData icon,
     required String label,
     required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Card(
-        elevation: 2,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              Icon(icon, size: 28, color: AppTheme.primaryColor),
-              const SizedBox(height: 8),
-              Text(label, style: AppTheme.smallTextStyle),
-            ],
+  }) =>
+      InkWell(
+        onTap: onTap,
+        child: Card(
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                Icon(icon, size: 28, color: AppTheme.primaryColor),
+                const SizedBox(height: 8),
+                Text(label, style: AppTheme.smallTextStyle),
+              ],
+            ),
           ),
         ),
-      ),
-    );
-  }
+      );
 }
