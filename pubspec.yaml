@@ -1,0 +1,35 @@
+name: conference_app
+description: "A Flutter Event App - Class Project."
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # remove if we wanna publish to pub.dev
+
+version: 1.0.0+1
+homepage: https://github.com/finn1817/confernece_app
+
+environment:
+  sdk: ^3.7.2
+
+platforms:
+  android:
+
+dependencies:
+  flutter:
+    sdk: flutter
+  provider: ^6.0.5
+  firebase_core: ^2.21.0
+  cloud_firestore: ^4.12.2
+  firebase_auth: ^4.8.0
+  shared_preferences: ^2.2.0
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^2.0.0
+
+flutter:
+
+  uses-material-design: true
