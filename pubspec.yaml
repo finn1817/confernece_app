@@ -33,3 +33,7 @@ dev_dependencies:
 flutter:
 
   uses-material-design: true
+  //needs to be added if running new home_screen.dart
+  assets:
+    - assets/images/im3.jpeg
+  
