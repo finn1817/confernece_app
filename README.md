@@ -74,7 +74,7 @@ All data is stored in Firebase Cloud Database, and only admin users can log in t
 - Implements all **CRUD** fearures, lets you add, remove, and edit all events and info in each event! Also Allows you to add & remove Users or other Admins from the database!
 
 ---
-# This project is in the master branch, not the main!
+# // whatever we wanna add
 ---
 
 ## Creators
