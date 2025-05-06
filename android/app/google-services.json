@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "846912321029",
+    "project_id": "conference-app-40408",
+    "storage_bucket": "conference-app-40408.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:846912321029:android:d6c27b58e6cd6532710e6c",
+        "android_client_info": {
+          "package_name": "com.example.conference_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "846912321029-iu666qqc949j3ven09pb0nuvk2710f3h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.conference_app",
+            "certificate_hash": "b174dc9849a31d32469ab0a8b2393c730a2c0f77"
+          }
+        },
+        {
+          "client_id": "846912321029-vrofj8i6dpub5mnhn028lflqrkqkdglr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBjJovnr4beCwYjMW9VQRt1HgclytHPSJo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "846912321029-vrofj8i6dpub5mnhn028lflqrkqkdglr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
