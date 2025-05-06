@@ -1,3 +1,9 @@
+import org.gradle.api.tasks.compile.JavaCompile
+
+tasks.withType<org.gradle.api.tasks.compile.JavaCompile>().configureEach {
+    options.compilerArgs.add("-Xlint:-options")
+}
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
