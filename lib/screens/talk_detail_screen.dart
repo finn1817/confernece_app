@@ -165,7 +165,7 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Convert color code string to Color if it exists (Thought out, not coded in, works but doesn't have purpose) (Used AI)
+    // convert color code text & banner to color (Used AI for help coding this)
     Color talkColor = talk.containsKey('colorCode')
         ? Color(int.parse(talk['colorCode'].substring(1, 7), radix: 16) + 0xFF000000)
         : AppTheme.primaryColor;
@@ -173,6 +173,7 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(isEditing ? 'Edit Talk' : 'Talk Details'),
+        backgroundColor: talkColor,
         actions: [
           if (widget.isAdmin) ...[
             IconButton(
