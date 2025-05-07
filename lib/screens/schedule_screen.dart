@@ -29,9 +29,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   List<String> availableDays = ['All Dates'];
   List<String> availableTracks = ['All Tracks'];
   List<String> availableAttendees = ['All Attendees'];
-
   // Admin toggle
   bool isAdmin = false;
+  TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -40,87 +40,108 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     _loadTalks();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   void _checkAdminStatus() {
     isAdmin = main.isAdminGlobal;
   }
 
   void _loadTalks() {
-    _firebaseService.getTalks().listen((talksList) {
-      setState(() {
-        allTalks = talksList;
+    _firebaseService.getTalks().listen(
+      (talksList) {
+        setState(() {
+          allTalks = talksList;
 
-        // Gather unique values (no 'All ...' in these sets)
-        final Set<String> daysSet = <String>{};
-        final Set<String> tracksSet = <String>{};
-        final Set<String> attendeesSet = <String>{};
+          // Gather unique values (no 'All ...' in these sets)
+          final Set<String> daysSet = <String>{};
+          final Set<String> tracksSet = <String>{};
+          final Set<String> attendeesSet = <String>{};
 
-        for (var talk in talksList) {
-          final day = talk['day']?.toString() ?? '';
-          final track = talk['track']?.toString() ?? '';
-          final attendeesStr = talk['attendees']?.toString() ?? '';
+          for (var talk in talksList) {
+            final day = talk['day']?.toString() ?? '';
+            final track = talk['track']?.toString() ?? '';
+            final attendeesStr = talk['attendees']?.toString() ?? '';
 
-          if (day.isNotEmpty)       daysSet.add(day);
-          if (track.isNotEmpty)     tracksSet.add(track);
-          if (attendeesStr.isNotEmpty) {
-            attendeesSet.addAll(
-              attendeesStr
-                  .split(',')
-                  .map((a) => a.trim())
-                  .where((a) => a.isNotEmpty),
-            );
+            if (day.isNotEmpty) daysSet.add(day);
+            if (track.isNotEmpty) tracksSet.add(track);
+            if (attendeesStr.isNotEmpty) {
+              attendeesSet.addAll(
+                attendeesStr
+                    .split(',')
+                    .map((a) => a.trim())
+                    .where((a) => a.isNotEmpty),
+              );
+            }
           }
+
+          // Prepend exactly one 'All ...' entry
+          availableDays = ['All Dates']..addAll(daysSet.toList()..sort());
+          availableTracks = ['All Tracks']..addAll(tracksSet.toList()..sort());
+          availableAttendees = ['All Attendees']
+            ..addAll(attendeesSet.toList()..sort());
+
+          _applyFilters();
+          isLoading = false;
+        });
+      },
+      onError: (error) {
+        print('Error loading talks: $error');
+        setState(() => isLoading = false);
+        if (mounted) {
+          CommonWidgets.showNotificationBanner(
+            context,
+            message: 'Error loading talks: $error',
+            isError: true,
+          );
         }
-
-        // Prepend exactly one 'All ...' entry
-        availableDays = ['All Dates']..addAll(daysSet.toList()..sort());
-        availableTracks = ['All Tracks']..addAll(tracksSet.toList()..sort());
-        availableAttendees = ['All Attendees']..addAll(attendeesSet.toList()..sort());
-
-        _applyFilters();
-        isLoading = false;
-      });
-    }, onError: (error) {
-      print('Error loading talks: $error');
-      setState(() => isLoading = false);
-      if (mounted) {
-        CommonWidgets.showNotificationBanner(
-          context,
-          message: 'Error loading talks: $error',
-          isError: true,
-        );
-      }
-    });
+      },
+    );
   }
 
   void _applyFilters() {
     setState(() {
-      filteredTalks = allTalks.where((talk) {
-        final day = talk['day']?.toString() ?? '';
-        final track = talk['track']?.toString() ?? '';
-        final attendeesStr = talk['attendees']?.toString() ?? '';
+      filteredTalks =
+          allTalks.where((talk) {
+            final day = talk['day']?.toString() ?? '';
+            final track = talk['track']?.toString() ?? '';
+            final attendeesStr = talk['attendees']?.toString() ?? '';
 
-        final matchesDay = _selectedDay == 'All Dates' || day == _selectedDay;
-        final matchesTrack = _selectedTrack == 'All Tracks' || track == _selectedTrack;
+            final matchesDay =
+                _selectedDay == 'All Dates' || day == _selectedDay;
+            final matchesTrack =
+                _selectedTrack == 'All Tracks' || track == _selectedTrack;
 
-        bool matchesAttendee = _selectedAttendee == 'All Attendees';
-        if (!matchesAttendee && attendeesStr.isNotEmpty) {
-          final list = attendeesStr
-              .split(',')
-              .map((a) => a.trim())
-              .where((a) => a.isNotEmpty)
-              .toList();
-          matchesAttendee = list.contains(_selectedAttendee);
-        }
+            bool matchesAttendee = _selectedAttendee == 'All Attendees';
+            if (!matchesAttendee && attendeesStr.isNotEmpty) {
+              final list =
+                  attendeesStr
+                      .split(',')
+                      .map((a) => a.trim())
+                      .where((a) => a.isNotEmpty)
+                      .toList();
+              matchesAttendee = list.contains(_selectedAttendee);
+            }
 
-        final q = _searchQuery.toLowerCase();
-        final matchesSearch = q.isEmpty ||
-            (talk['title']?.toString().toLowerCase().contains(q) ?? false) ||
-            (talk['speaker']?.toString().toLowerCase().contains(q) ?? false) ||
-            (talk['description']?.toString().toLowerCase().contains(q) ?? false) ||
-            attendeesStr.toLowerCase().contains(q);
+            final q = _searchQuery.toLowerCase();
+            final matchesSearch =
+                q.isEmpty ||
+                (talk['title']?.toString().toLowerCase().contains(q) ??
+                    false) ||
+                (talk['speaker']?.toString().toLowerCase().contains(q) ??
+                    false) ||
+                (talk['description']?.toString().toLowerCase().contains(q) ??
+                    false) ||
+                attendeesStr.toLowerCase().contains(q);
 
-        return matchesDay && matchesTrack && matchesAttendee && matchesSearch;
-      }).toList();
+            return matchesDay &&
+                matchesTrack &&
+                matchesAttendee &&
+                matchesSearch;
+          }).toList();
 
       // Sort first by day, then by time
       filteredTalks.sort((a, b) {
@@ -151,36 +172,42 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           ),
         ],
       ),
-      body: isLoading
-          ? CommonWidgets.loadingIndicator()
-          : Column(
-              children: [
-                _buildFilterBar(),
-                Expanded(child: _buildScheduleList()),
-              ],
-            ),
-      floatingActionButton: isAdmin
-          ? FloatingActionButton(
-              child: const Icon(Icons.add),
-              onPressed: () => AppRouter.navigateToTalkForm(
-                context,
-                onSave: (newTalk) {
-                  _firebaseService.addTalk(newTalk).then((_) {
-                    CommonWidgets.showNotificationBanner(
-                      context,
-                      message: 'New talk added',
-                    );
-                  }).catchError((e) {
-                    CommonWidgets.showNotificationBanner(
-                      context,
-                      message: 'Error adding talk: $e',
-                      isError: true,
-                    );
-                  });
-                },
+      body:
+          isLoading
+              ? CommonWidgets.loadingIndicator()
+              : Column(
+                children: [
+                  _buildFilterBar(),
+                  Expanded(child: _buildScheduleList()),
+                ],
               ),
-            )
-          : null,
+      floatingActionButton:
+          isAdmin
+              ? FloatingActionButton(
+                child: const Icon(Icons.add),
+                onPressed:
+                    () => AppRouter.navigateToTalkForm(
+                      context,
+                      onSave: (newTalk) {
+                        _firebaseService
+                            .addTalk(newTalk)
+                            .then((_) {
+                              CommonWidgets.showNotificationBanner(
+                                context,
+                                message: 'New talk added',
+                              );
+                            })
+                            .catchError((e) {
+                              CommonWidgets.showNotificationBanner(
+                                context,
+                                message: 'Error adding talk: $e',
+                                isError: true,
+                              );
+                            });
+                      },
+                    ),
+              )
+              : null,
     );
   }
 
@@ -191,13 +218,16 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       child: Column(
         children: [
           TextField(
+            controller: _searchController,
             decoration: const InputDecoration(
               hintText: 'Search talks or speakers…',
               prefixIcon: Icon(Icons.search),
               border: OutlineInputBorder(),
             ),
             onChanged: (v) {
-              _searchQuery = v;
+              setState(() {
+                _searchQuery = v;
+              });
               _applyFilters();
             },
           ),
@@ -209,14 +239,25 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Day',
                     border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
                   ),
                   value: _selectedDay,
-                  items: availableDays
-                      .map((d) => DropdownMenuItem(value: d, child: Text(d, overflow: TextOverflow.ellipsis)))
-                      .toList(),
+                  items:
+                      availableDays
+                          .map(
+                            (d) => DropdownMenuItem(
+                              value: d,
+                              child: Text(d, overflow: TextOverflow.ellipsis),
+                            ),
+                          )
+                          .toList(),
                   onChanged: (v) {
-                    _selectedDay = v!;
+                    setState(() {
+                      _selectedDay = v!;
+                    });
                     _applyFilters();
                   },
                 ),
@@ -227,14 +268,25 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Track',
                     border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
                   ),
                   value: _selectedTrack,
-                  items: availableTracks
-                      .map((t) => DropdownMenuItem(value: t, child: Text(t, overflow: TextOverflow.ellipsis)))
-                      .toList(),
+                  items:
+                      availableTracks
+                          .map(
+                            (t) => DropdownMenuItem(
+                              value: t,
+                              child: Text(t, overflow: TextOverflow.ellipsis),
+                            ),
+                          )
+                          .toList(),
                   onChanged: (v) {
-                    _selectedTrack = v!;
+                    setState(() {
+                      _selectedTrack = v!;
+                    });
                     _applyFilters();
                   },
                 ),
@@ -249,11 +301,19 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             ),
             value: _selectedAttendee,
-            items: availableAttendees
-                .map((a) => DropdownMenuItem(value: a, child: Text(a, overflow: TextOverflow.ellipsis)))
-                .toList(),
+            items:
+                availableAttendees
+                    .map(
+                      (a) => DropdownMenuItem(
+                        value: a,
+                        child: Text(a, overflow: TextOverflow.ellipsis),
+                      ),
+                    )
+                    .toList(),
             onChanged: (v) {
-              _selectedAttendee = v!;
+              setState(() {
+                _selectedAttendee = v!;
+              });
               _applyFilters();
             },
           ),
@@ -273,6 +333,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             _selectedTrack = 'All Tracks';
             _selectedAttendee = 'All Attendees';
             _searchQuery = '';
+            _searchController.clear();
           });
           _applyFilters();
         },
@@ -295,7 +356,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Text(
                   currDay,
-                  style: AppTheme.subheadingStyle.copyWith(color: AppTheme.primaryColor),
+                  style: AppTheme.subheadingStyle.copyWith(
+                    color: AppTheme.primaryColor,
+                  ),
                 ),
               ),
             _buildTalkCard(talk),
@@ -306,27 +369,31 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   }
 
   Widget _buildTalkCard(Map<String, dynamic> talk) {
-    final talkColor = talk.containsKey('colorCode')
-        ? Color(int.parse(talk['colorCode'].substring(1), radix: 16) | 0xFF000000)
-        : AppTheme.primaryColor;
+    final talkColor =
+        talk.containsKey('colorCode')
+            ? Color(
+              int.parse(talk['colorCode'].substring(1), radix: 16) | 0xFF000000,
+            )
+            : AppTheme.primaryColor;
 
-    final trackTag = talk['track'] != null
-        ? Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: talkColor.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              talk['track'],
-              style: TextStyle(
-                color: talkColor,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
+    final trackTag =
+        talk['track'] != null
+            ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: talkColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
               ),
-            ),
-          )
-        : const SizedBox.shrink();
+              child: Text(
+                talk['track'],
+                style: TextStyle(
+                  color: talkColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            )
+            : const SizedBox.shrink();
 
     Widget attendeeBadge = const SizedBox.shrink();
     final atts = talk['attendees']?.toString() ?? '';
@@ -341,9 +408,16 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.people, size: 12, color: AppTheme.textSecondaryColor),
+            const Icon(
+              Icons.people,
+              size: 12,
+              color: AppTheme.textSecondaryColor,
+            ),
             const SizedBox(width: 4),
-            Text(count.toString(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+            Text(
+              count.toString(),
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       );
@@ -357,12 +431,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         side: BorderSide(color: talkColor, width: 2),
       ),
       child: InkWell(
-        onTap: () => AppRouter.navigateToTalkDetail(
-          context,
-          talk: talk,
-          isAdmin: isAdmin,
-          onUpdate: updateTalk,
-        ),
+        onTap:
+            () => AppRouter.navigateToTalkDetail(
+              context,
+              talk: talk,
+              isAdmin: isAdmin,
+              onUpdate: updateTalk,
+            ),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
@@ -372,8 +447,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(talk['time'] ?? 'TBD', style: const TextStyle(fontWeight: FontWeight.bold)),
-                    if (talk['duration'] != null) Text(talk['duration'], style: AppTheme.smallTextStyle),
+                    Text(
+                      talk['time'] ?? 'TBD',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    if (talk['duration'] != null)
+                      Text(talk['duration'], style: AppTheme.smallTextStyle),
                   ],
                 ),
               ),
@@ -392,21 +471,40 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                             maxLines: 2,
                           ),
                         ),
-                        if (isAdmin && (talk['hasMissingRegistration'] == true || talk['hasMissingCopyright'] == true))
-                          const Icon(Icons.warning, color: AppTheme.warningColor),
+                        if (isAdmin &&
+                            (talk['hasMissingRegistration'] == true ||
+                                talk['hasMissingCopyright'] == true))
+                          const Icon(
+                            Icons.warning,
+                            color: AppTheme.warningColor,
+                          ),
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text(talk['speaker'] ?? 'Unknown Speaker', style: AppTheme.bodyTextStyle),
+                    Text(
+                      talk['speaker'] ?? 'Unknown Speaker',
+                      style: AppTheme.bodyTextStyle,
+                    ),
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        const Icon(Icons.location_on, size: 14, color: AppTheme.textSecondaryColor),
+                        const Icon(
+                          Icons.location_on,
+                          size: 14,
+                          color: AppTheme.textSecondaryColor,
+                        ),
                         const SizedBox(width: 4),
-                        Text(talk['location'] ?? 'TBD', style: AppTheme.smallTextStyle),
+                        Text(
+                          talk['location'] ?? 'TBD',
+                          style: AppTheme.smallTextStyle,
+                        ),
                         const SizedBox(width: 8),
                         trackTag,
-                        if (count > 0) Padding(padding: const EdgeInsets.only(left: 8), child: attendeeBadge),
+                        if (count > 0)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8),
+                            child: attendeeBadge,
+                          ),
                       ],
                     ),
                   ],
@@ -423,7 +521,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     if (isAdmin) {
       main.isAdminGlobal = false;
       setState(() => isAdmin = false);
-      CommonWidgets.showNotificationBanner(context, message: 'Logged out of admin mode');
+      CommonWidgets.showNotificationBanner(
+        context,
+        message: 'Logged out of admin mode',
+      );
       return;
     }
 
@@ -433,43 +534,60 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     await showDialog<void>(
       context: context,
       barrierDismissible: true,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Admin Login'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Please enter admin credentials'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: userCtrl,
-              decoration: const InputDecoration(labelText: 'Username', border: OutlineInputBorder()),
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Admin Login'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Please enter admin credentials'),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: userCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Username',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: passCtrl,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Password',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: passCtrl,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'Password', border: OutlineInputBorder()),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(child: const Text('Cancel'), onPressed: () => Navigator.of(ctx).pop()),
-          TextButton(
-            child: const Text('Login'),
-            onPressed: () {
-              if (userCtrl.text == 'Admin' && passCtrl.text == 'CSIT425') {
-                main.isAdminGlobal = true;
-                setState(() => isAdmin = true);
-                Navigator.of(ctx).pop();
-                CommonWidgets.showNotificationBanner(context, message: 'Admin mode activated');
-              } else {
-                Navigator.of(ctx).pop();
-                CommonWidgets.showNotificationBanner(context, message: 'Invalid credentials', isError: true);
-              }
-            },
+            actions: [
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () => Navigator.of(ctx).pop(),
+              ),
+              TextButton(
+                child: const Text('Login'),
+                onPressed: () {
+                  if (userCtrl.text == 'Admin' && passCtrl.text == 'CSIT425') {
+                    main.isAdminGlobal = true;
+                    setState(() => isAdmin = true);
+                    Navigator.of(ctx).pop();
+                    CommonWidgets.showNotificationBanner(
+                      context,
+                      message: 'Admin mode activated',
+                    );
+                  } else {
+                    Navigator.of(ctx).pop();
+                    CommonWidgets.showNotificationBanner(
+                      context,
+                      message: 'Invalid credentials',
+                      isError: true,
+                    );
+                  }
+                },
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }
