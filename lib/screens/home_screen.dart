@@ -8,6 +8,10 @@ import 'package:conference_app/services/firebase_service.dart';
 import 'package:conference_app/main.dart' as main;
 
 class HomeScreen extends StatefulWidget {
+  final VoidCallback toggleTheme;
+
+  const HomeScreen({Key? key, required this.toggleTheme}) : super(key: key);
+
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
@@ -163,6 +167,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       appBar: CommonWidgets.standardAppBar(
         title: 'Conference App',
         actions: [
+          IconButton(
+            icon: const Icon(Icons.brightness_6),
+            onPressed: widget.toggleTheme, // calls the toggle from main.dart
+            tooltip: 'Toggle Theme',
+          ),
           IconButton(
             icon: Icon(isAdmin ? Icons.admin_panel_settings : Icons.person),
             onPressed: _showLoginDialog,
@@ -475,24 +484,28 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) =>
-      InkWell(
-        onTap: onTap,
-        child: Card(
-          elevation: 2,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                Icon(icon, size: 28, color: AppTheme.primaryColor),
-                const SizedBox(height: 8),
-                Text(label, style: AppTheme.smallTextStyle),
-              ],
-            ),
+  required IconData icon,
+  required String label,
+  required VoidCallback onTap,
+}) {
+  return KeyedSubtree(
+    key: UniqueKey(), // 👈 prevents GlobalKey duplication issues
+    child: InkWell(
+      onTap: onTap,
+      child: Card(
+        elevation: 2,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              Icon(icon, size: 28, color: AppTheme.primaryColor),
+              const SizedBox(height: 8),
+              Text(label, style: AppTheme.smallTextStyle),
+            ],
           ),
         ),
-      );
+      ),
+    ),
+  );
+  }
 }
