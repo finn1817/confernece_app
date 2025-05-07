@@ -36,12 +36,24 @@ class ConferenceApp extends StatefulWidget {
 }
 
 class _ConferenceAppState extends State<ConferenceApp> {
+  ThemeMode _themeMode = ThemeMode.light; // start in light mode
+
+  void _toggleTheme() {
+    setState(() {
+      _themeMode =
+          _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Conference App',
       theme: AppTheme.lightTheme, // default light mode
-      home: HomeScreen(), // starting page
+      darkTheme: AppTheme.darkTheme, // dark mode
+      themeMode: _themeMode, // ← use dynamic theme mode
+      home: HomeScreen(toggleTheme: _toggleTheme), // starting page
       onGenerateRoute: AppRouter.generateRoute, // handles named navigation
       debugShowCheckedModeBanner: false, // hides flutter debug banner
     );

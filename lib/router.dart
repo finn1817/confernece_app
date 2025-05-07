@@ -30,8 +30,8 @@ class AppRouter {
 
     // Public routes
     switch (settings.name) {
-      case home:
-        return MaterialPageRoute(builder: (_) => HomeScreen());
+      //case home:
+        //return MaterialPageRoute(builder: (_) => HomeScreen());
 
       case schedule:
         return MaterialPageRoute(builder: (_) => ScheduleScreen());

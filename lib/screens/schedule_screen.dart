@@ -214,7 +214,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   Widget _buildFilterBar() {
     return Container(
       padding: const EdgeInsets.all(8),
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       child: Column(
         children: [
           TextField(
@@ -356,9 +356,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Text(
                   currDay,
-                  style: AppTheme.subheadingStyle.copyWith(
-                    color: AppTheme.primaryColor,
-                  ),
+                  style: AppTheme.subheadingStyle.copyWith(color: AppTheme.primaryColor),
                 ),
               ),
             _buildTalkCard(talk),
@@ -402,7 +400,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       attendeeBadge = Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: Colors.grey[200],
+          color: Theme.of(context).colorScheme.surfaceVariant,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -447,12 +445,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      talk['time'] ?? 'TBD',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    if (talk['duration'] != null)
-                      Text(talk['duration'], style: AppTheme.smallTextStyle),
+                    Text(talk['time'] ?? 'TBD', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    if (talk['duration'] != null) Text(talk['duration'], style: AppTheme.smallTextStyle),
                   ],
                 ),
               ),
@@ -466,7 +460,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         Expanded(
                           child: Text(
                             talk['title'] ?? 'Untitled Talk',
-                            style: AppTheme.subheadingStyle,
+                            style: Theme.of(context).textTheme.titleMedium,
                             overflow: TextOverflow.ellipsis,
                             maxLines: 2,
                           ),
@@ -481,10 +475,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      talk['speaker'] ?? 'Unknown Speaker',
-                      style: AppTheme.bodyTextStyle,
-                    ),
+                    Text(talk['speaker'] ?? 'Unknown Speaker', style: AppTheme.bodyTextStyle),
                     const SizedBox(height: 6),
                     Row(
                       children: [
@@ -494,10 +485,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                           color: AppTheme.textSecondaryColor,
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          talk['location'] ?? 'TBD',
-                          style: AppTheme.smallTextStyle,
-                        ),
+                        Text(talk['location'] ?? 'TBD', style: AppTheme.smallTextStyle),
                         const SizedBox(width: 8),
                         trackTag,
                         if (count > 0)

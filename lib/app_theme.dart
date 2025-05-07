@@ -141,4 +141,60 @@ class AppTheme {
       ),
     );
   }
+
+  // dark theme data
+  static ThemeData get darkTheme {
+  return ThemeData(
+    brightness: Brightness.dark,
+    primarySwatch: Colors.blue,
+    scaffoldBackgroundColor: Colors.grey[900],
+    cardColor: Colors.grey[800],
+    appBarTheme: const AppBarTheme(
+      backgroundColor: primaryColor,
+      foregroundColor: Colors.white,
+      elevation: 0,
+      centerTitle: false,
+      titleTextStyle: TextStyle(
+        fontSize: 20.0,
+        fontWeight: FontWeight.w500,
+        color: Colors.white,
+      ),
+    ),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Colors.white),
+      bodyMedium: TextStyle(color: Colors.white70),
+      titleLarge: TextStyle(color: Colors.white),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.white,
+        backgroundColor: primaryColor,
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: Colors.grey.shade600),
+      ),
+      filled: true,
+      fillColor: Colors.grey.shade800,
+      labelStyle: const TextStyle(color: Colors.white70),
+      hintStyle: const TextStyle(color: Colors.white38),
+    ),
+    dividerTheme: DividerThemeData(
+      color: Colors.grey.shade700,
+      thickness: 1,
+    ),
+    chipTheme: ChipThemeData(
+      backgroundColor: Colors.grey.shade700,
+      disabledColor: Colors.grey.shade600,
+      selectedColor: primaryColor.withOpacity(0.3),
+      secondarySelectedColor: primaryColor.withOpacity(0.3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+      labelStyle: const TextStyle(color: Colors.white),
+      secondaryLabelStyle: const TextStyle(color: Colors.white),
+      brightness: Brightness.dark,
+    ),
+  );
+}
 }

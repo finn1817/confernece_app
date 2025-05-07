@@ -211,20 +211,20 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
                           children: [
                             Text(
                               'Admin Alert',
-                              style: AppTheme.bodyTextStyle.copyWith(
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: AppTheme.textPrimaryColor,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
                             if (talk['hasMissingRegistration'] ?? false)
                               Text(
                                 'Registration data missing',
-                                style: AppTheme.smallTextStyle,
+                                style: Theme.of(context).textTheme.bodySmall,
                               ),
                             if (talk['hasMissingCopyright'] ?? false)
                               Text(
                                 'Copyright notice missing',
-                                style: AppTheme.smallTextStyle,
+                                style: Theme.of(context).textTheme.bodySmall,
                               ),
                           ],
                         ),
@@ -437,8 +437,8 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
       children: [
         Text(
           label,
-          style: AppTheme.smallTextStyle.copyWith(
-            color: AppTheme.textSecondaryColor,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).textTheme.bodySmall?.color,
           ),
         ),
         const SizedBox(height: 4),
@@ -453,15 +453,15 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
             crossAxisAlignment: isMultiline ? CrossAxisAlignment.start : CrossAxisAlignment.center,
             children: [
               if (icon != null) ...[
-                Icon(icon, color: AppTheme.primaryColor),
+                Icon(icon, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 8),
               ],
               Expanded(
                 child: Text(
                   value,
                   style: isMultiline
-                      ? AppTheme.bodyTextStyle
-                      : AppTheme.bodyTextStyle.copyWith(fontWeight: FontWeight.bold),
+                      ? Theme.of(context).textTheme.bodyMedium
+                      : Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
             ],
