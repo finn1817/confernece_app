@@ -195,20 +195,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         padding: const EdgeInsets.symmetric(
                             vertical: 10, horizontal: 16),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withOpacity(0.1),
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppTheme.primaryColor),
+                          border: Border.all(color: Theme.of(context).colorScheme.primary),
                         ),
                         child: Row(
                           children: [
                             Icon(Icons.admin_panel_settings,
-                                color: AppTheme.primaryColor),
+                                color: Theme.of(context).colorScheme.primary),
                             const SizedBox(width: 8),
                             Text(
                               'Admin Mode',
-                              style: AppTheme.bodyTextStyle.copyWith(
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryColor,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
                           ],
@@ -227,12 +227,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           children: [
                             Text(
                               'Welcome to the Conference!',
-                              style: AppTheme.headingStyle,
+                              style: Theme.of(context).textTheme.titleLarge,
                             ),
                             const SizedBox(height: 8),
                             Text(
                               'Check out all current talks/events, create your schedule, and connect with other speakers in CSIT 425!',
-                              style: AppTheme.bodyTextStyle,
+                              style: Theme.of(context).textTheme.bodyLarge,
                             ),
                           ],
                         ),
@@ -240,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     ),
 
                     const SizedBox(height: 24),
-                    Text('Upcoming Talks', style: AppTheme.subheadingStyle),
+                    Text('Upcoming Talks', style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
 
                     if (nextTalk != null)
@@ -252,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       ),
 
                     const SizedBox(height: 24),
-                    Text('Quick Actions', style: AppTheme.subheadingStyle),
+                    Text('Quick Actions', style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
 
                     Row(
@@ -313,9 +313,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
                                 vertical: 14),
-                            textStyle: AppTheme.bodyTextStyle.copyWith(
+                            textStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onPrimary,
                             ),
                           ),
                           onPressed: () {
@@ -336,7 +336,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ? Color(
             int.parse(talk['colorCode'].substring(1), radix: 16) |
                 0xFF000000)
-        : AppTheme.primaryColor;
+        : Theme.of(context).colorScheme.primary;
 
     Widget attendeeBadge = const SizedBox.shrink();
     if (talk.containsKey('attendees') &&
@@ -350,18 +350,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         padding:
             const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: Colors.grey[200],
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.people,
-                size: 12, color: AppTheme.textSecondaryColor),
+                size: 12, color: Theme.of(context).textTheme.bodySmall?.color),
             const SizedBox(width: 4),
-            Text('$count attendees',
-                style: const TextStyle(
-                    fontSize: 10, fontWeight: FontWeight.bold)),
+            Text(
+              '$count attendees',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold),
+            )
           ],
         ),
       );
@@ -399,7 +400,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   Expanded(
                     child: Text(
                       talk['title'] ?? 'Untitled Talk',
-                      style: AppTheme.subheadingStyle,
+                      style: Theme.of(context).textTheme.titleMedium,
                       overflow: TextOverflow.ellipsis,
                       maxLines: 2,
                     ),
@@ -410,6 +411,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           (talk['hasMissingCopyright'] ??
                               false)))
                     const Icon(Icons.warning,
+                    //
                         color: AppTheme.warningColor),
                 ],
               ),
@@ -422,7 +424,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           AppTheme.textSecondaryColor),
                   const SizedBox(width: 4),
                   Text(talk['speaker'] ?? 'Unknown Speaker',
-                      style: AppTheme.smallTextStyle),
+                      style: Theme.of(context).textTheme.bodySmall),
                   if (attendeeBadge is! SizedBox)
                     Padding(
                       padding:
@@ -440,7 +442,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           AppTheme.textSecondaryColor),
                   const SizedBox(width: 4),
                   Text(talk['time'] ?? 'TBD',
-                      style: AppTheme.smallTextStyle),
+                      style: Theme.of(context).textTheme.bodySmall),
                   const SizedBox(width: 16),
                   const Icon(Icons.location_on,
                       size: 16,
@@ -448,14 +450,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           AppTheme.textSecondaryColor),
                   const SizedBox(width: 4),
                   Text(talk['location'] ?? 'TBD',
-                      style: AppTheme.smallTextStyle),
+                      style: Theme.of(context).textTheme.bodySmall),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
                 talk['description'] ??
                     'No description available',
-                style: AppTheme.bodyTextStyle,
+                style: Theme.of(context).textTheme.bodyMedium,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -498,9 +500,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              Icon(icon, size: 28, color: AppTheme.primaryColor),
+              Icon(icon, size: 28, color: Theme.of(context).colorScheme.primary),
               const SizedBox(height: 8),
-              Text(label, style: AppTheme.smallTextStyle),
+              Text(label, style: Theme.of(context).textTheme.bodySmall),
             ],
           ),
         ),
