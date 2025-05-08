@@ -23,13 +23,13 @@ class User {
     required this.isAdmin,
   });
 
-  // creates a User from Firebase data + doc ID
+// creates a User from Firebase data + doc ID
   factory User.fromMap(String id, Map<String, dynamic> data) {
     return User(
       id: id,
       username: data['username'] as String,
       password: data['password'] as String,
-      isAdmin: (data['isAdmin'] as int) == 1, // stored as 1 or 0
+      isAdmin: (data['isAdmin'] == 1 || data['isAdmin'] == true), // flexible for 1 or true
     );
   }
 

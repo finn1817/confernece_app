@@ -6,6 +6,7 @@ import 'screens/schedule_screen.dart';
 import 'screens/talk_detail_screen.dart';
 import 'screens/talk_form_screen.dart';
 import 'screens/user_management_screen.dart';
+import 'screens/login_screen.dart';
 import 'widgets/common_widgets.dart';
 import 'main.dart' as main;
 
@@ -15,6 +16,7 @@ class AppRouter {
   static const String talkDetail      = '/talk-detail';
   static const String talkForm        = '/talk-form';
   static const String userManagement  = '/users';
+  static const String login           = '/login';
 
   // Any route in here requires isAdminGlobal == true
   static const List<String> _adminRoutes = [
@@ -30,8 +32,14 @@ class AppRouter {
 
     // Public routes
     switch (settings.name) {
-      //case home:
-        //return MaterialPageRoute(builder: (_) => HomeScreen());
+      case login:
+        return MaterialPageRoute(builder: (_) => LoginScreen());
+        
+      case home:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return MaterialPageRoute(builder: (_) => HomeScreen(
+          toggleTheme: args?['toggleTheme'] ?? () {},
+        ));
 
       case schedule:
         return MaterialPageRoute(builder: (_) => ScheduleScreen());

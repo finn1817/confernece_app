@@ -82,83 +82,43 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _showLoginDialog() async {
-    if (isAdmin) {
-      // log out via helper
-      main.logoutAdmin();
-      setState(() => isAdmin = false);
-      CommonWidgets.showNotificationBanner(
-        context,
-        message: 'Logged out of admin mode',
-      );
-      return;
-    }
-
-    final usernameController = TextEditingController();
-    final passwordController = TextEditingController();
-
-    await showDialog<void>(
+  Future<void> _showLogoutConfirmation() async {
+    final result = await showDialog<bool>(
       context: context,
-      barrierDismissible: true,
-      builder: (dialogContext) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('Admin Login'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                const Text('Please enter admin credentials'),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: usernameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Username',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          title: const Text('Confirm Logout'),
+          content: const Text('Are you sure you want to logout?'),
           actions: <Widget>[
             TextButton(
               child: const Text('Cancel'),
-              onPressed: () => Navigator.of(dialogContext).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(false),
             ),
             TextButton(
-              child: const Text('Login'),
-              onPressed: () async {
-                final success = await main.loginAdmin(
-                  usernameController.text.trim(),
-                  passwordController.text,
-                );
-                Navigator.of(dialogContext).pop();
-                if (success) {
-                  setState(() => isAdmin = true);
-                  CommonWidgets.showNotificationBanner(
-                    context,
-                    message: 'Admin mode activated',
-                  );
-                } else {
-                  CommonWidgets.showNotificationBanner(
-                    context,
-                    message: 'Invalid credentials',
-                    isError: true,
-                  );
-                }
-              },
+              child: const Text('Logout'),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
             ),
           ],
         );
       },
     );
+
+    if (result == true) {
+      // Perform logout
+      main.logoutAdmin();
+      
+      // Reset admin status
+      setState(() => isAdmin = false);
+      
+      // Show notification
+      CommonWidgets.showNotificationBanner(
+        context,
+        message: 'Successfully logged out',
+      );
+      
+      // Navigate to login screen
+      Navigator.of(context).pushReplacementNamed(AppRouter.login);
+    }
   }
 
   @override
@@ -167,14 +127,21 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       appBar: CommonWidgets.standardAppBar(
         title: 'Conference App',
         actions: [
+          // Theme toggle button
           IconButton(
             icon: const Icon(Icons.brightness_6),
-            onPressed: widget.toggleTheme, // calls the toggle from main.dart
+            onPressed: widget.toggleTheme,
             tooltip: 'Toggle Theme',
           ),
+          // Logout/Admin button
           IconButton(
-            icon: Icon(isAdmin ? Icons.admin_panel_settings : Icons.person),
-            onPressed: _showLoginDialog,
+            icon: Icon(isAdmin 
+                ? Icons.logout
+                : Icons.login),
+            onPressed: isAdmin 
+                ? _showLogoutConfirmation 
+                : () => Navigator.of(context).pushReplacementNamed(AppRouter.login),
+            tooltip: isAdmin ? 'Logout' : 'Login',
           ),
         ],
       ),
@@ -411,7 +378,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           (talk['hasMissingCopyright'] ??
                               false)))
                     const Icon(Icons.warning,
-                    //
                         color: AppTheme.warningColor),
                 ],
               ),
@@ -486,28 +452,28 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildActionButton({
-  required IconData icon,
-  required String label,
-  required VoidCallback onTap,
-}) {
-  return KeyedSubtree(
-    key: UniqueKey(), // 👈 prevents GlobalKey duplication issues
-    child: InkWell(
-      onTap: onTap,
-      child: Card(
-        elevation: 2,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              Icon(icon, size: 28, color: Theme.of(context).colorScheme.primary),
-              const SizedBox(height: 8),
-              Text(label, style: Theme.of(context).textTheme.bodySmall),
-            ],
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return KeyedSubtree(
+      key: UniqueKey(), // prevents GlobalKey duplication issues
+      child: InkWell(
+        onTap: onTap,
+        child: Card(
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                Icon(icon, size: 28, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(height: 8),
+                Text(label, style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 }

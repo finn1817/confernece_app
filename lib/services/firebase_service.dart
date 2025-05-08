@@ -71,7 +71,9 @@ class FirebaseService {
 
   Future<User?> authenticate(String username, String password) async {
     final u = await getUserByUsername(username);
-    if (u != null && u.password == password) return u;
+    if (u != null && u.password == password) {
+      return u;
+    }
     return null;
   }
 }
