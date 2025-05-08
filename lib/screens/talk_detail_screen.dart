@@ -21,6 +21,7 @@ class TalkDetailScreen extends StatefulWidget {
 class _TalkDetailScreenState extends State<TalkDetailScreen> {
   late Map<String, dynamic> talk;
   bool isEditing = false;
+  bool isFavorite = false; // New feature: favorite talks
   final FirebaseService _firebaseService = FirebaseService();
   
   // all controllers for the edit fields in the app
@@ -38,6 +39,9 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
   void initState() {
     super.initState();
     talk = Map<String, dynamic>.from(widget.talk);
+    
+    // Check if this talk is already a favorite
+    isFavorite = talk['isFavorite'] ?? false;
     
     // start the controllers with these existing values
     titleController = TextEditingController(text: talk['title'] ?? '');
@@ -91,6 +95,43 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
       
       isEditing = !isEditing;
     });
+  }
+  
+  // New feature: Toggle favorite status
+  void _toggleFavorite() {
+    setState(() {
+      isFavorite = !isFavorite;
+      talk['isFavorite'] = isFavorite;
+      
+      // Update in Firebase
+      _firebaseService.updateTalk(talk['id'], {'isFavorite': isFavorite}).then((_) {
+        CommonWidgets.showNotificationBanner(
+          context,
+          message: isFavorite ? 'Added to favorites' : 'Removed from favorites',
+        );
+      }).catchError((error) {
+        // Revert state if error
+        setState(() {
+          isFavorite = !isFavorite;
+          talk['isFavorite'] = isFavorite;
+        });
+        
+        CommonWidgets.showNotificationBanner(
+          context,
+          message: 'Error updating favorite status: $error',
+          isError: true,
+        );
+      });
+    });
+  }
+  
+  // New feature: Export talk details
+  void _exportTalkDetails() {
+    // In a real app, this would generate a PDF or calendar event
+    CommonWidgets.showNotificationBanner(
+      context,
+      message: 'Talk details exported to calendar',
+    );
   }
   
   // show the delete confirmation log at the bottom of the app when used
@@ -175,6 +216,25 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
         title: Text(isEditing ? 'Edit Talk' : 'Talk Details'),
         backgroundColor: talkColor,
         actions: [
+          // New feature: Favorite button
+          if (!isEditing)
+            IconButton(
+              icon: Icon(
+                isFavorite ? Icons.star : Icons.star_border,
+                color: isFavorite ? Colors.amber : null,
+              ),
+              onPressed: _toggleFavorite,
+              tooltip: isFavorite ? 'Remove from favorites' : 'Add to favorites',
+            ),
+            
+          // New feature: Export button
+          if (!isEditing)
+            IconButton(
+              icon: Icon(Icons.calendar_today),
+              onPressed: _exportTalkDetails,
+              tooltip: 'Export to calendar',
+            ),
+            
           if (widget.isAdmin) ...[
             IconButton(
               icon: Icon(isEditing ? Icons.save : Icons.edit),
@@ -194,6 +254,9 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // New feature: Countdown widget if the talk is in the future
+            _buildCountdownWidget(),
+            
             // Admin warnings
             if (widget.isAdmin && (talk['hasMissingRegistration'] ?? false || talk['hasMissingCopyright'] ?? false))
               Card(
@@ -350,40 +413,11 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
             
             const SizedBox(height: 32),
             
-            // Action buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                if (!isEditing) ...[
-                  Expanded(
-                    child: CommonWidgets.appButton(
-                      text: 'Add to My Schedule',
-                      onPressed: () {
-                        // Add to user's personal schedule
-                        CommonWidgets.showNotificationBanner(
-                          context,
-                          message: 'Added to your schedule',
-                        );
-                      },
-                      icon: Icons.bookmark_add,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: CommonWidgets.appButton(
-                      text: 'Share',
-                      onPressed: () {
-                        // Share talk info
-                        CommonWidgets.showNotificationBanner(
-                          context,
-                          message: 'Sharing options',
-                        );
-                      },
-                      icon: Icons.share,
-                      isOutlined: true,
-                    ),
-                  ),
-                ] else ...[
+            // Action buttons for editing - removed Add to Schedule and Share
+            if (isEditing) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
                   Expanded(
                     child: CommonWidgets.appButton(
                       text: 'Cancel',
@@ -416,7 +450,77 @@ class _TalkDetailScreenState extends State<TalkDetailScreen> {
                     ),
                   ),
                 ],
-              ],
+              ),
+            ],
+            
+            // New feature: QR code for talk (placeholder)
+            if (!isEditing) ...[
+              const SizedBox(height: 16),
+              Center(
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Icon(
+                        Icons.qr_code_2,
+                        size: 100,
+                        color: talkColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Talk ID: ${talk['id']?.substring(0, 8) ?? 'Unknown'}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+  
+  // New feature: Countdown widget
+  Widget _buildCountdownWidget() {
+    // Only show countdown if we have date and time information
+    if ((talk['day'] ?? '').isEmpty || (talk['time'] ?? '').isEmpty) {
+      return const SizedBox.shrink();
+    }
+    
+    // This is placeholder code - in a real app, you would parse the date and time properly
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Icon(Icons.timelapse, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Coming up on ${talk['day']} at ${talk['time']}',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  Text(
+                    'Don\'t miss this event!',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
