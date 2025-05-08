@@ -23,6 +23,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int upcomingTalksCount = 0;
   // store all fetched talks
   List<Map<String, dynamic>> talks = [];
+  // store favorite talks
+  List<Map<String, dynamic>> favoriteTalks = [];
 
   @override
   void initState() {
@@ -67,9 +69,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     try {
       final talks = await _firebaseService.getUpcomingTalks();
       if (!mounted) return;
+      
+      // Filter favorite talks
+      final favorites = talks.where((talk) => talk['isFavorite'] == true).toList();
+      
       setState(() {
         upcomingTalksCount = talks.length;
         this.talks = talks; // store the entire list
+        this.favoriteTalks = favorites; // store favorites
         isLoading = false;
       });
     } catch (e) {
@@ -211,6 +218,43 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         ),
                     ),
 
+                    // Favorites Section - New!
+                    if (favoriteTalks.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Icon(Icons.star, 
+                            size: 20, 
+                            color: Colors.amber,
+                          ),
+                          const SizedBox(width: 8),
+                          Text('Favorite Events', 
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: favoriteTalks.length > 1 ? 280 : 140, // Adjust height based on number of favorites
+                        child: ListView.builder(
+                          itemCount: favoriteTalks.length > 2 ? 2 : favoriteTalks.length, // Show max 2 favorites
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemBuilder: (context, index) => _buildNextTalkCard(favoriteTalks[index]),
+                        ),
+                      ),
+                      if (favoriteTalks.length > 2)
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton.icon(
+                            icon: const Icon(Icons.arrow_forward, size: 18),
+                            label: const Text('See all favorites'),
+                            onPressed: () {
+                              Navigator.pushNamed(context, AppRouter.schedule);
+                            },
+                          ),
+                        ),
+                    ],
+
                     const SizedBox(height: 12),
                     Text('Upcoming Talks', style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
@@ -278,6 +322,22 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           label: 'Refresh',
                           onTap: _loadData,
                         ),
+                        _buildActionButton(
+                          icon: Icons.star,
+                          label: 'Favorites',
+                          onTap: () {
+                            // You could add a dedicated favorites page,
+                            // but for now just scroll to favorites section
+                            if (favoriteTalks.isEmpty) {
+                              CommonWidgets.showNotificationBanner(
+                                context,
+                                message: 'Star talks in their detail view to add favorites',
+                              );
+                            } else {
+                              Navigator.pushNamed(context, AppRouter.schedule);
+                            }
+                          },
+                        ),
                       ],
                     ),
 
@@ -316,6 +376,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             int.parse(talk['colorCode'].substring(1), radix: 16) |
                 0xFF000000)
         : Theme.of(context).colorScheme.primary;
+
+    final bool isFavorite = talk['isFavorite'] == true;
 
     Widget attendeeBadge = const SizedBox.shrink();
     if (talk.containsKey('attendees') &&
@@ -384,13 +446,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       maxLines: 2,
                     ),
                   ),
-                  if (isAdmin &&
-                      ((talk['hasMissingRegistration'] ??
-                              false) ||
-                          (talk['hasMissingCopyright'] ??
-                              false)))
-                    const Icon(Icons.warning,
-                        color: AppTheme.warningColor),
+                  Row(
+                    children: [
+                      if (isFavorite)
+                        Icon(Icons.star, color: Colors.amber, size: 20),
+                      if (isAdmin &&
+                          ((talk['hasMissingRegistration'] ??
+                                  false) ||
+                              (talk['hasMissingCopyright'] ??
+                                  false)))
+                        const SizedBox(width: 4),
+                      if (isAdmin &&
+                          ((talk['hasMissingRegistration'] ??
+                                  false) ||
+                              (talk['hasMissingCopyright'] ??
+                                  false)))
+                        const Icon(Icons.warning,
+                            color: AppTheme.warningColor),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 6), // reduced spacing
