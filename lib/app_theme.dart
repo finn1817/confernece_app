@@ -54,6 +54,21 @@ class AppTheme {
     return ThemeData(
       primarySwatch: Colors.blue,
       scaffoldBackgroundColor: backgroundColor,
+      colorScheme: const ColorScheme.light(
+        primary: Colors.blue,
+        onPrimary: Colors.white,
+        secondary: Colors.blueAccent,
+        onSecondary: Colors.white,
+        background: Color(0xFFF5F5F5),
+        onBackground: Colors.black,
+        surface: Colors.white,
+        onSurface: Colors.black,
+        error: Colors.red,
+        onError: Colors.white,
+      ),
+      iconTheme: const IconThemeData(
+        color: Colors.blue,
+      ),
       cardTheme: CardTheme(
         color: cardColor,
         elevation: 2,
@@ -146,8 +161,22 @@ class AppTheme {
   static ThemeData get darkTheme {
   return ThemeData(
     brightness: Brightness.dark,
-    primarySwatch: Colors.blue,
     scaffoldBackgroundColor: Colors.grey[900],
+    colorScheme: const ColorScheme.dark(
+      primary: Colors.blue,
+      onPrimary: Colors.white,
+      secondary: Colors.blueAccent,
+      onSecondary: Colors.white,
+      background: Colors.black,
+      onBackground: Colors.white,
+      surface: Color(0xFF1E1E1E),
+      onSurface: Colors.white,
+      error: Colors.redAccent,
+      onError: Colors.white,
+    ),
+    iconTheme: const IconThemeData(
+      color: Colors.blue,
+    ),
     cardColor: Colors.grey[800],
     appBarTheme: const AppBarTheme(
       backgroundColor: primaryColor,
