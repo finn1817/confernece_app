@@ -51,7 +51,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   }
 
   void _loadTalks() {
-    _firebaseService.getTalks().listen(
+    _firebaseService.getUpcomingTalks().then(
       (talksList) {
         setState(() {
           allTalks = talksList;

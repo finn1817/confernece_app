@@ -2,6 +2,7 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:conference_app/models/user.dart';
+import 'package:conference_app/utils/date_utils.dart'; // Add this import
 
 class FirebaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -18,9 +19,52 @@ class FirebaseService {
     });
   }
 
+  // Update the existing getUpcomingTalks method
   Future<List<Map<String, dynamic>>> getUpcomingTalks() async {
-    final snap = await _firestore.collection(_talks).get();
-    return snap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
+    try {
+      final snap = await _firestore.collection(_talks).get();
+      final List<Map<String, dynamic>> talks = snap.docs
+          .map((d) => {'id': d.id, ...d.data()})
+          .toList();
+      
+      // Filter out past events
+      return talks.where((talk) {
+        final day = talk['day'] as String? ?? '';
+        final time = talk['time'] as String? ?? '';
+        
+        // Skip filtering if date or time is missing
+        if (day.isEmpty || time.isEmpty) return true;
+        
+        return !ConferenceDateUtils.isEventInPast(day, time);
+      }).toList();
+    } catch (e) {
+      print('Error getting upcoming talks: $e');
+      rethrow;
+    }
+  }
+  
+  // Add the new method for past talks
+  Future<List<Map<String, dynamic>>> getPastTalks() async {
+    try {
+      final snap = await _firestore.collection(_talks).get();
+      final List<Map<String, dynamic>> talks = snap.docs
+          .map((d) => {'id': d.id, ...d.data()})
+          .toList();
+      
+      // Filter to include only past events
+      return talks.where((talk) {
+        final day = talk['day'] as String? ?? '';
+        final time = talk['time'] as String? ?? '';
+        
+        // Skip filtering if date or time is missing
+        if (day.isEmpty || time.isEmpty) return false;
+        
+        return ConferenceDateUtils.isEventInPast(day, time);
+      }).toList();
+    } catch (e) {
+      print('Error getting past talks: $e');
+      rethrow;
+    }
   }
 
   Future<DocumentReference> addTalk(Map<String, dynamic> talk) {

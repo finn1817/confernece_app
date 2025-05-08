@@ -7,7 +7,8 @@ import 'screens/talk_detail_screen.dart';
 import 'screens/talk_form_screen.dart';
 import 'screens/user_management_screen.dart';
 import 'screens/login_screen.dart';
-import 'screens/favorites_screen.dart'; // Add this import
+import 'screens/favorites_screen.dart'; 
+import 'screens/past_events_screen.dart'; // Add this import
 import 'widgets/common_widgets.dart';
 import 'main.dart' as main;
 
@@ -19,11 +20,13 @@ class AppRouter {
   static const String userManagement  = '/users';
   static const String login           = '/login';
   static const String favorites       = '/favorites';
+  static const String pastEvents      = '/past-events'; // Add this constant
 
   // Any route in here requires isAdminGlobal == true
   static const List<String> _adminRoutes = [
     talkForm,
     userManagement,
+    pastEvents, // Add past events as an admin route
   ];
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -47,7 +50,6 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => ScheduleScreen());
         
       case favorites:
-        // Update this line to use FavoritesScreen instead of ScheduleScreen
         return MaterialPageRoute(builder: (_) => FavoritesScreen());
 
       case talkDetail:
@@ -87,6 +89,9 @@ class AppRouter {
 
           case userManagement:
             return UserManagementScreen();
+            
+          case pastEvents: // Add case for past events
+            return PastEventsScreen();
 
           default:
             return Scaffold(
@@ -154,5 +159,10 @@ class AppRouter {
   // Added navigation helper for favorites
   static void navigateToFavorites(BuildContext ctx) {
     Navigator.pushNamed(ctx, favorites);
+  }
+  
+  // Add navigation helper for past events
+  static void navigateToPastEvents(BuildContext ctx) {
+    Navigator.pushNamed(ctx, pastEvents);
   }
 }

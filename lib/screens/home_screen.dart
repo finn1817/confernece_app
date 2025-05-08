@@ -85,6 +85,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     setState(() => isLoading = true);
 
     try {
+      // Use the new method that filters out past events
       final talks = await _firebaseService.getUpcomingTalks();
       if (!mounted) return;
       
@@ -378,6 +379,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           ),
                           onPressed: () {
                             AppRouter.navigateToUserManagement(context);
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 12), // Add spacing between buttons
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.history),
+                          label: const Text('View Past Events'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            textStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          onPressed: () {
+                            AppRouter.navigateToPastEvents(context);
                           },
                         ),
                       ),
