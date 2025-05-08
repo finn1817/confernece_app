@@ -32,7 +32,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.initState();
     username = widget.username;
     WidgetsBinding.instance.addObserver(this);
-    _checkAdminStatus();
+    _determineAdminStatus();
     _loadData();
   }
 
@@ -45,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _checkAdminStatus();
+      _determineAdminStatus();
       _loadData();
     }
   }
@@ -53,14 +53,24 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _checkAdminStatus();
+    _determineAdminStatus();
     _loadData();
   }
 
-  void _checkAdminStatus() {
-    setState(() {
-      isAdmin = main.isAdminGlobal;
-    });
+  Future<void> _determineAdminStatus() async {
+    try {
+      final userDoc = await _firebaseService.getUserByUsername(username);
+      final isAdminField = userDoc?.isAdmin ?? false;
+      setState(() {
+        isAdmin = isAdminField == true || isAdminField == 1;
+        main.isAdminGlobal = isAdmin;
+      });
+    } catch (e) {
+      setState(() {
+        isAdmin = false;
+        main.isAdminGlobal = false;
+      });
+    }
   }
 
   Future<void> _loadData() async {
@@ -344,32 +354,26 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         ],
                         Container(
                           margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
-                          padding: const EdgeInsets.all(5),
-                          height: 275,
+                          padding: const EdgeInsets.all(12),
+                          height: 350,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
                             color: Colors.white,
                           ),
-                          child: Transform.translate(
-                            offset: const Offset(0, -25),
-                            child: Transform.scale(
-                              scale: 0.75,
-                              child: TableCalendar(
-                                firstDay: DateTime.utc(2020, 1, 1),
-                                lastDay: DateTime.utc(2030, 12, 31),
-                                focusedDay: _focusedDay,
-                                selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                                onDaySelected: (selectedDay, focusedDay) {
-                                  setState(() {
-                                    _selectedDay = selectedDay;
-                                    _focusedDay = focusedDay;
-                                  });
-                                },
-                                onPageChanged: (focusedDay) {},
-                                calendarFormat: _calendarFormat,
-                                availableGestures: AvailableGestures.all,
-                              ),
-                            ),
+                          child: TableCalendar(
+                            firstDay: DateTime.utc(2020, 1, 1),
+                            lastDay: DateTime.utc(2030, 12, 31),
+                            focusedDay: _focusedDay,
+                            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                            onDaySelected: (selectedDay, focusedDay) {
+                              setState(() {
+                                _selectedDay = selectedDay;
+                                _focusedDay = focusedDay;
+                              });
+                            },
+                            onPageChanged: (focusedDay) {},
+                            calendarFormat: _calendarFormat,
+                            availableGestures: AvailableGestures.all,
                           ),
                         ),
                       ],
