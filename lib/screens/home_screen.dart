@@ -21,7 +21,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool isAdmin = false;
   bool isLoading = true;
   int upcomingTalksCount = 0;
-  Map<String, dynamic>? nextTalk;
+  // store all fetched talks
+  List<Map<String, dynamic>> talks = [];
 
   @override
   void initState() {
@@ -68,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (!mounted) return;
       setState(() {
         upcomingTalksCount = talks.length;
-        nextTalk = talks.isNotEmpty ? talks[0] : null;
+        this.talks = talks; // store the entire list
         isLoading = false;
       });
     } catch (e) {
@@ -158,7 +159,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     if (isAdmin)
                       Container(
                         width: double.infinity,
-                        margin: const EdgeInsets.only(bottom: 16),
+                        margin: const EdgeInsets.only(bottom: 8),
                         padding: const EdgeInsets.symmetric(
                             vertical: 10, horizontal: 16),
                         decoration: BoxDecoration(
@@ -182,45 +183,56 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         ),
                       ),
 
-                    Card(
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Welcome to the Conference!',
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Check out all current talks/events, create your schedule, and connect with other speakers in CSIT 425!',
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
-                          ],
+                    SizedBox(
+                      width: double.infinity, // ensures full width
+                      child: Card(
+                        elevation: 2,
+                        margin: const EdgeInsets.only(bottom: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                      ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Welcome to the Conference!',
+                                  style: Theme.of(context).textTheme.titleMedium,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Browse talks and connect with CSIT 425 speakers.',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
                     Text('Upcoming Talks', style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
 
-                    if (nextTalk != null)
-                      _buildNextTalkCard(nextTalk!)
+                    if (upcomingTalksCount > 0)
+                      SizedBox(
+                        height: 400, // fits about 3 cards cleanly
+                        child: ListView.builder(
+                          itemCount: talks.length >= 3 ? 3 : talks.length,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemBuilder: (context, index) => _buildNextTalkCard(talks[index]),
+                        ),
+                      )
                     else
                       CommonWidgets.emptyState(
                         message: 'No upcoming talks scheduled',
                         icon: Icons.event_busy,
                       ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
                     Text('Quick Actions', style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 5),
 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -337,7 +349,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     return Card(
       elevation: 3,
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 4), // smaller vertical margin
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
         side: BorderSide(color: talkColor, width: 2),
@@ -356,7 +368,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           );
         },
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10), // smaller inner padding
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -381,7 +393,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         color: AppTheme.warningColor),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6), // reduced spacing
               Row(
                 children: [
                   const Icon(Icons.person,
@@ -401,48 +413,45 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ),
               const SizedBox(height: 4),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Icon(Icons.access_time,
-                      size: 16,
-                      color:
-                          AppTheme.textSecondaryColor),
-                  const SizedBox(width: 4),
-                  Text(talk['time'] ?? 'TBD',
-                      style: Theme.of(context).textTheme.bodySmall),
-                  const SizedBox(width: 16),
-                  const Icon(Icons.location_on,
-                      size: 16,
-                      color:
-                          AppTheme.textSecondaryColor),
-                  const SizedBox(width: 4),
-                  Text(talk['location'] ?? 'TBD',
-                      style: Theme.of(context).textTheme.bodySmall),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                talk['description'] ??
-                    'No description available',
-                style: Theme.of(context).textTheme.bodyMedium,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 8),
-              CommonWidgets.appButton(
-                text: 'View Details',
-                onPressed: () {
-                  AppRouter.navigateToTalkDetail(
-                    context,
-                    talk: talk,
-                    isAdmin: isAdmin,
-                    onUpdate: (updatedTalk) {
-                      _firebaseService.updateTalk(
-                          updatedTalk['id'], updatedTalk);
-                      _loadData();
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const Icon(Icons.access_time, size: 14, color: AppTheme.textSecondaryColor),
+                        const SizedBox(width: 4),
+                        Text(talk['time'] ?? 'TBD', style: Theme.of(context).textTheme.bodySmall),
+                        const SizedBox(width: 16),
+                        const Icon(Icons.location_on, size: 14, color: AppTheme.textSecondaryColor),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            talk['location'] ?? 'TBD',
+                            style: Theme.of(context).textTheme.bodySmall,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  CommonWidgets.appButton(
+                    text: 'View Details',
+                    onPressed: () {
+                      AppRouter.navigateToTalkDetail(
+                        context,
+                        talk: talk,
+                        isAdmin: isAdmin,
+                        onUpdate: (updatedTalk) {
+                          _firebaseService.updateTalk(updatedTalk['id'], updatedTalk);
+                          _loadData();
+                        },
+                      );
                     },
-                  );
-                },
-                isOutlined: true,
+                    isOutlined: true,
+                  ),
+                ],
               ),
             ],
           ),
