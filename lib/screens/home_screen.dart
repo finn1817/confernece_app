@@ -21,7 +21,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool isAdmin = false;
   bool isLoading = true;
   int upcomingTalksCount = 0;
-  Map<String, dynamic>? nextTalk;
+  // store all fetched talks
+  List<Map<String, dynamic>> talks = [];
 
   @override
   void initState() {
@@ -68,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (!mounted) return;
       setState(() {
         upcomingTalksCount = talks.length;
-        nextTalk = talks.isNotEmpty ? talks[0] : null;
+        this.talks = talks; // store the entire list
         isLoading = false;
       });
     } catch (e) {
@@ -243,12 +244,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     Text('Upcoming Talks', style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
 
-                    if (nextTalk != null)
-                      _buildNextTalkCard(nextTalk!)
+
+                    if (upcomingTalksCount > 0)
+                      SizedBox(
+                        height: 460, // fits 3 cards and spacing cleanly
+                        child: ListView.builder(
+                          itemCount: talks.length >= 3 ? 3 : talks.length,
+                          physics: const NeverScrollableScrollPhysics(), // prevents double scrolling
+                          itemBuilder: (context, index) => _buildNextTalkCard(talks[index]),
+                        ),
+                      )
                     else
-                      CommonWidgets.emptyState(
-                        message: 'No upcoming talks scheduled',
-                        icon: Icons.event_busy,
+                    CommonWidgets.emptyState(
+                      message: 'No upcoming talks scheduled',
+                      icon: Icons.event_busy,
                       ),
 
                     const SizedBox(height: 24),
@@ -370,7 +379,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     return Card(
       elevation: 3,
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 6), // was 8
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
         side: BorderSide(color: talkColor, width: 2),
@@ -389,7 +398,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           );
         },
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(12.0), // smaller inner padding
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -415,7 +424,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         color: AppTheme.warningColor),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6), // between rows
               Row(
                 children: [
                   const Icon(Icons.person,
@@ -454,14 +463,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ],
               ),
               const SizedBox(height: 8),
-              Text(
-                talk['description'] ??
-                    'No description available',
-                style: Theme.of(context).textTheme.bodyMedium,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 8),
+              
+
               CommonWidgets.appButton(
                 text: 'View Details',
                 onPressed: () {
