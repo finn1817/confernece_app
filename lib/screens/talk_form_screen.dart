@@ -114,7 +114,7 @@ class _TalkFormScreenState extends State<TalkFormScreen> {
                       decoration: InputDecoration(
                         labelText: 'Date',
                         border: OutlineInputBorder(),
-                        hintText: 'ex) 01/01/2025 Month/Date/Year',
+                        hintText: 'ex) 00/00/00 Month/Date/Year',
                       ),
                       validator: _validateDateFormat,
                       keyboardType: TextInputType.datetime,

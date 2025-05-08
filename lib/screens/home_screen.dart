@@ -6,6 +6,7 @@ import 'package:conference_app/widgets/common_widgets.dart';
 import 'package:conference_app/router.dart';
 import 'package:conference_app/services/firebase_service.dart';
 import 'package:conference_app/main.dart' as main;
+import 'package:url_launcher/url_launcher.dart'; // Add this import for URL launching
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback toggleTheme;
@@ -25,6 +26,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   List<Map<String, dynamic>> talks = [];
   // store favorite talks
   List<Map<String, dynamic>> favoriteTalks = [];
+
+  // GitHub repository URL
+  final String githubUrl = "https://github.com/finn1817/confernece_app";
 
   @override
   void initState() {
@@ -59,6 +63,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     setState(() {
       isAdmin = main.isAdminGlobal;
     });
+  }
+
+  // Function to launch URL
+  Future<void> _launchUrl(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        CommonWidgets.showNotificationBanner(
+          context,
+          message: 'Could not launch $url',
+          isError: true,
+        );
+      }
+    }
   }
 
   Future<void> _loadData() async {
@@ -364,6 +382,68 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         ),
                       ),
                     ],
+
+                    // Footer with GitHub link
+                    const SizedBox(height: 32),
+                    InkWell(
+                      onTap: () => _launchUrl(githubUrl),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Theme.of(context).dividerColor,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.code, 
+                                  size: 20,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Open Source Project',
+                                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                    color: Theme.of(context).colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'View project on GitHub',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            Text(
+                              'MIT License © 2025',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Credits section
+                    Center(
+                      child: Text(
+                        'Created by: Dan, Greg, Aurora, and Jiwon',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),

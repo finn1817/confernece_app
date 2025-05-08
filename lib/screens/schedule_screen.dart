@@ -159,6 +159,45 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     _firebaseService.updateTalk(updatedTalk['id'], updatedTalk);
     // UI refreshes automatically via the stream listener
   }
+  
+  Future<void> _showLogoutConfirmation() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Confirm Logout'),
+          content: const Text('Are you sure you want to logout?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+            ),
+            TextButton(
+              child: const Text('Logout'),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result == true) {
+      // Perform logout
+      main.logoutAdmin();
+      
+      // Reset admin status
+      setState(() => isAdmin = false);
+      
+      // Show notification
+      CommonWidgets.showNotificationBanner(
+        context,
+        message: 'Successfully logged out',
+      );
+      
+      // Navigate to login screen
+      Navigator.of(context).pushReplacementNamed(AppRouter.login);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -166,9 +205,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       appBar: CommonWidgets.standardAppBar(
         title: 'Conference Schedule',
         actions: [
+          // Added proper logout button
           IconButton(
-            icon: Icon(isAdmin ? Icons.admin_panel_settings : Icons.person),
-            onPressed: _showLoginDialog,
+            icon: Icon(isAdmin ? Icons.logout : Icons.login),
+            onPressed: isAdmin ? _showLogoutConfirmation : _showLoginDialog,
+            tooltip: isAdmin ? 'Logout' : 'Login',
           ),
         ],
       ),
@@ -507,16 +548,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   }
 
   Future<void> _showLoginDialog() async {
-    if (isAdmin) {
-      main.isAdminGlobal = false;
-      setState(() => isAdmin = false);
-      CommonWidgets.showNotificationBanner(
-        context,
-        message: 'Logged out of admin mode',
-      );
-      return;
-    }
-
     final userCtrl = TextEditingController();
     final passCtrl = TextEditingController();
 
