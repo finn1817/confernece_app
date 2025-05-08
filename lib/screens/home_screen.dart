@@ -197,12 +197,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Welcome to the Conference!',
+                                  'Welcome to the our Android Conference App!',
                                   style: Theme.of(context).textTheme.titleMedium,
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Browse talks and connect with CSIT 425 speakers.',
+                                  'This was made as our CSIT 425 Final Project.',
                                   style: Theme.of(context).textTheme.bodySmall,
                                 ),
                               ],
