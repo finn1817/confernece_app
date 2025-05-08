@@ -19,48 +19,63 @@ class FirebaseService {
     });
   }
 
-  // Update the existing getUpcomingTalks method
+  // Gets all upcoming talks (talks scheduled in the future)
   Future<List<Map<String, dynamic>>> getUpcomingTalks() async {
     try {
-      final snap = await _firestore.collection(_talks).get();
-      final List<Map<String, dynamic>> talks = snap.docs
-          .map((d) => {'id': d.id, ...d.data()})
-          .toList();
+      final snapshot = await _firestore.collection(_talks).get();
       
-      // Filter out past events
-      return talks.where((talk) {
-        final day = talk['day'] as String? ?? '';
-        final time = talk['time'] as String? ?? '';
+      final List<Map<String, dynamic>> upcomingTalks = [];
+      
+      for (var doc in snapshot.docs) {
+        final talk = {'id': doc.id, ...doc.data()};
+        
+        // Use the date utility to check if this event is in the past
+        final String day = talk['day'] ?? '';
+        final String time = talk['time'] ?? '';
         
         // Skip filtering if date or time is missing
-        if (day.isEmpty || time.isEmpty) return true;
+        if (day.isEmpty || time.isEmpty) {
+          upcomingTalks.add(talk); // Default to showing events with no date
+          continue;
+        }
         
-        return !ConferenceDateUtils.isEventInPast(day, time);
-      }).toList();
+        if (!ConferenceDateUtils.isEventInPast(day, time)) {
+          upcomingTalks.add(talk);
+        }
+      }
+      
+      return upcomingTalks;
     } catch (e) {
       print('Error getting upcoming talks: $e');
       rethrow;
     }
   }
-  
-  // Add the new method for past talks
+
+  // Gets past talks (talks that have already occurred)
   Future<List<Map<String, dynamic>>> getPastTalks() async {
     try {
-      final snap = await _firestore.collection(_talks).get();
-      final List<Map<String, dynamic>> talks = snap.docs
-          .map((d) => {'id': d.id, ...d.data()})
-          .toList();
+      final snapshot = await _firestore.collection(_talks).get();
       
-      // Filter to include only past events
-      return talks.where((talk) {
-        final day = talk['day'] as String? ?? '';
-        final time = talk['time'] as String? ?? '';
+      final List<Map<String, dynamic>> pastTalks = [];
+      
+      for (var doc in snapshot.docs) {
+        final talk = {'id': doc.id, ...doc.data()};
+        
+        // Use the date utility to check if this event is in the past
+        final String day = talk['day'] ?? '';
+        final String time = talk['time'] ?? '';
         
         // Skip filtering if date or time is missing
-        if (day.isEmpty || time.isEmpty) return false;
+        if (day.isEmpty || time.isEmpty) {
+          continue; // Don't include events with no date in past events
+        }
         
-        return ConferenceDateUtils.isEventInPast(day, time);
-      }).toList();
+        if (ConferenceDateUtils.isEventInPast(day, time)) {
+          pastTalks.add(talk);
+        }
+      }
+      
+      return pastTalks;
     } catch (e) {
       print('Error getting past talks: $e');
       rethrow;

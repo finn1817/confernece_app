@@ -1,6 +1,9 @@
+// lib/screens/schedule_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:conference_app/app_theme.dart';
 import 'package:conference_app/widgets/common_widgets.dart';
+import 'package:conference_app/widgets/filter_modal.dart'; // Add this import
 import 'package:conference_app/router.dart';
 import 'package:conference_app/services/firebase_service.dart';
 import 'package:conference_app/main.dart' as main;
@@ -20,18 +23,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   List<Map<String, dynamic>> filteredTalks = [];
 
   // --- FILTER STATE ---
-  String _selectedDay = 'All Dates';
-  String _selectedTrack = 'All Tracks';
-  String _selectedAttendee = 'All Attendees';
-  String _searchQuery = '';
+  Map<String, String> activeFilters = {};
+  String searchQuery = '';
 
-  // Dropdown options
-  List<String> availableDays = ['All Dates'];
-  List<String> availableTracks = ['All Tracks'];
-  List<String> availableAttendees = ['All Attendees'];
+  // Filter options derived from data
+  Map<String, List<String>> filterOptions = {};
+
   // Admin toggle
   bool isAdmin = false;
-  TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -40,58 +39,33 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     _loadTalks();
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
   void _checkAdminStatus() {
     isAdmin = main.isAdminGlobal;
   }
 
   void _loadTalks() {
+    setState(() => isLoading = true);
+    
     _firebaseService.getUpcomingTalks().then(
       (talksList) {
+        if (!mounted) return;
+        
         setState(() {
           allTalks = talksList;
 
-          // Gather unique values (no 'All ...' in these sets)
-          final Set<String> daysSet = <String>{};
-          final Set<String> tracksSet = <String>{};
-          final Set<String> attendeesSet = <String>{};
-
-          for (var talk in talksList) {
-            final day = talk['day']?.toString() ?? '';
-            final track = talk['track']?.toString() ?? '';
-            final attendeesStr = talk['attendees']?.toString() ?? '';
-
-            if (day.isNotEmpty) daysSet.add(day);
-            if (track.isNotEmpty) tracksSet.add(track);
-            if (attendeesStr.isNotEmpty) {
-              attendeesSet.addAll(
-                attendeesStr
-                    .split(',')
-                    .map((a) => a.trim())
-                    .where((a) => a.isNotEmpty),
-              );
-            }
-          }
-
-          // Prepend exactly one 'All ...' entry
-          availableDays = ['All Dates']..addAll(daysSet.toList()..sort());
-          availableTracks = ['All Tracks']..addAll(tracksSet.toList()..sort());
-          availableAttendees = ['All Attendees']
-            ..addAll(attendeesSet.toList()..sort());
-
+          // Extract all filter options from data
+          _extractFilterOptions();
+          
+          // Apply any active filters
           _applyFilters();
+          
           isLoading = false;
         });
       },
       onError: (error) {
         print('Error loading talks: $error');
-        setState(() => isLoading = false);
         if (mounted) {
+          setState(() => isLoading = false);
           CommonWidgets.showNotificationBanner(
             context,
             message: 'Error loading talks: $error',
@@ -102,46 +76,60 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
+  void _extractFilterOptions() {
+    // Initialize filter maps
+    final Map<String, Set<String>> optionSets = {
+      'day': {},
+      'track': {},
+      'speaker': {},
+      'location': {},
+      'colorCode': {},
+    };
+    
+    // Extract unique values for each filter type
+    for (var talk in allTalks) {
+      for (var key in optionSets.keys) {
+        if (talk.containsKey(key) && talk[key] != null && talk[key].toString().isNotEmpty) {
+          optionSets[key]!.add(talk[key].toString());
+        }
+      }
+    }
+    
+    // Convert sets to sorted lists
+    filterOptions = optionSets.map((key, valueSet) {
+      final valueList = valueSet.toList()..sort();
+      return MapEntry(key, valueList);
+    });
+  }
+
   void _applyFilters() {
     setState(() {
-      filteredTalks =
-          allTalks.where((talk) {
-            final day = talk['day']?.toString() ?? '';
-            final track = talk['track']?.toString() ?? '';
-            final attendeesStr = talk['attendees']?.toString() ?? '';
-
-            final matchesDay =
-                _selectedDay == 'All Dates' || day == _selectedDay;
-            final matchesTrack =
-                _selectedTrack == 'All Tracks' || track == _selectedTrack;
-
-            bool matchesAttendee = _selectedAttendee == 'All Attendees';
-            if (!matchesAttendee && attendeesStr.isNotEmpty) {
-              final list =
-                  attendeesStr
-                      .split(',')
-                      .map((a) => a.trim())
-                      .where((a) => a.isNotEmpty)
-                      .toList();
-              matchesAttendee = list.contains(_selectedAttendee);
-            }
-
-            final q = _searchQuery.toLowerCase();
-            final matchesSearch =
-                q.isEmpty ||
-                (talk['title']?.toString().toLowerCase().contains(q) ??
-                    false) ||
-                (talk['speaker']?.toString().toLowerCase().contains(q) ??
-                    false) ||
-                (talk['description']?.toString().toLowerCase().contains(q) ??
-                    false) ||
-                attendeesStr.toLowerCase().contains(q);
-
-            return matchesDay &&
-                matchesTrack &&
-                matchesAttendee &&
-                matchesSearch;
-          }).toList();
+      filteredTalks = allTalks.where((talk) {
+        // Apply search filter
+        if (searchQuery.isNotEmpty) {
+          final query = searchQuery.toLowerCase();
+          final matchesSearch = 
+            (talk['title']?.toString().toLowerCase().contains(query) ?? false) ||
+            (talk['speaker']?.toString().toLowerCase().contains(query) ?? false) ||
+            (talk['location']?.toString().toLowerCase().contains(query) ?? false) ||
+            (talk['track']?.toString().toLowerCase().contains(query) ?? false) ||
+            (talk['description']?.toString().toLowerCase().contains(query) ?? false);
+          
+          if (!matchesSearch) return false;
+        }
+        
+        // Apply each active filter
+        for (var entry in activeFilters.entries) {
+          final field = entry.key;
+          final value = entry.value;
+          
+          if (talk[field] == null || talk[field].toString() != value) {
+            return false;
+          }
+        }
+        
+        return true;
+      }).toList();
 
       // Sort first by day, then by time
       filteredTalks.sort((a, b) {
@@ -155,9 +143,44 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     });
   }
 
+  void _showFilterModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.9,
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: FilterModalScreen(
+          filterOptions: filterOptions,
+          currentFilters: activeFilters,
+          onApplyFilters: (filters) {
+            setState(() {
+              activeFilters = filters;
+              _applyFilters();
+            });
+          },
+          searchQuery: searchQuery,
+          onSearchChanged: (query) {
+            setState(() {
+              searchQuery = query;
+              _applyFilters();
+            });
+          },
+        ),
+      ),
+    );
+  }
+
   void updateTalk(Map<String, dynamic> updatedTalk) {
     _firebaseService.updateTalk(updatedTalk['id'], updatedTalk);
-    // UI refreshes automatically via the stream listener
+    _loadTalks(); // Refresh data after update
   }
   
   Future<void> _showLogoutConfirmation() async {
@@ -205,7 +228,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       appBar: CommonWidgets.standardAppBar(
         title: 'Conference Schedule',
         actions: [
-          // Added proper logout button
+          // Add filter icon button
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: _showFilterModal,
+            tooltip: 'Filter Events',
+          ),
+          
+          // Logout/login button
           IconButton(
             icon: Icon(isAdmin ? Icons.logout : Icons.login),
             onPressed: isAdmin ? _showLogoutConfirmation : _showLoginDialog,
@@ -213,151 +243,144 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           ),
         ],
       ),
-      body:
-          isLoading
-              ? CommonWidgets.loadingIndicator()
-              : Column(
-                children: [
-                  _buildFilterBar(),
-                  Expanded(child: _buildScheduleList()),
-                ],
+      body: isLoading
+          ? CommonWidgets.loadingIndicator()
+          : Column(
+              children: [
+                // Show active filters summary
+                if (activeFilters.isNotEmpty || searchQuery.isNotEmpty)
+                  _buildActiveFiltersBar(),
+                
+                // Events list
+                Expanded(
+                  child: _buildScheduleList(),
+                ),
+              ],
+            ),
+      floatingActionButton: isAdmin
+          ? FloatingActionButton(
+              child: const Icon(Icons.add),
+              onPressed: () => AppRouter.navigateToTalkForm(
+                context,
+                onSave: (newTalk) {
+                  _firebaseService
+                      .addTalk(newTalk)
+                      .then((_) {
+                        CommonWidgets.showNotificationBanner(
+                          context,
+                          message: 'New talk added',
+                        );
+                        _loadTalks(); // Refresh data
+                      })
+                      .catchError((e) {
+                        CommonWidgets.showNotificationBanner(
+                          context,
+                          message: 'Error adding talk: $e',
+                          isError: true,
+                        );
+                      });
+                },
               ),
-      floatingActionButton:
-          isAdmin
-              ? FloatingActionButton(
-                child: const Icon(Icons.add),
-                onPressed:
-                    () => AppRouter.navigateToTalkForm(
-                      context,
-                      onSave: (newTalk) {
-                        _firebaseService
-                            .addTalk(newTalk)
-                            .then((_) {
-                              CommonWidgets.showNotificationBanner(
-                                context,
-                                message: 'New talk added',
-                              );
-                            })
-                            .catchError((e) {
-                              CommonWidgets.showNotificationBanner(
-                                context,
-                                message: 'Error adding talk: $e',
-                                isError: true,
-                              );
-                            });
-                      },
-                    ),
-              )
-              : null,
+            )
+          : null,
     );
   }
 
-  Widget _buildFilterBar() {
+  Widget _buildActiveFiltersBar() {
+    int totalFilters = activeFilters.length + (searchQuery.isNotEmpty ? 1 : 0);
+    
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: Theme.of(context).colorScheme.surface,
-      child: Column(
+      child: Row(
         children: [
-          TextField(
-            controller: _searchController,
-            decoration: const InputDecoration(
-              hintText: 'Search talks or speakers…',
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(),
-            ),
-            onChanged: (v) {
-              setState(() {
-                _searchQuery = v;
-              });
-              _applyFilters();
-            },
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(
-                    labelText: 'Day',
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
+          Expanded(
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                // Search query chip
+                if (searchQuery.isNotEmpty)
+                  Chip(
+                    label: Text(
+                      'Search: ${searchQuery.length > 15 ? '${searchQuery.substring(0, 15)}...' : searchQuery}',
+                      style: const TextStyle(fontSize: 12),
                     ),
+                    deleteIcon: const Icon(Icons.close, size: 16),
+                    onDeleted: () {
+                      setState(() {
+                        searchQuery = '';
+                        _applyFilters();
+                      });
+                    },
                   ),
-                  value: _selectedDay,
-                  items:
-                      availableDays
-                          .map(
-                            (d) => DropdownMenuItem(
-                              value: d,
-                              child: Text(d, overflow: TextOverflow.ellipsis),
+                
+                // Filter chips
+                ...activeFilters.entries.map((entry) {
+                  // Special case for color filter
+                  if (entry.key == 'colorCode') {
+                    final color = Color(int.parse(entry.value.substring(1), radix: 16) | 0xFF000000);
+                    return Chip(
+                      label: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 16,
+                            height: 16,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
                             ),
-                          )
-                          .toList(),
-                  onChanged: (v) {
-                    setState(() {
-                      _selectedDay = v!;
-                    });
-                    _applyFilters();
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(
-                    labelText: 'Track',
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
-                    ),
-                  ),
-                  value: _selectedTrack,
-                  items:
-                      availableTracks
-                          .map(
-                            (t) => DropdownMenuItem(
-                              value: t,
-                              child: Text(t, overflow: TextOverflow.ellipsis),
-                            ),
-                          )
-                          .toList(),
-                  onChanged: (v) {
-                    setState(() {
-                      _selectedTrack = v!;
-                    });
-                    _applyFilters();
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            decoration: const InputDecoration(
-              labelText: 'Attendee',
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            ),
-            value: _selectedAttendee,
-            items:
-                availableAttendees
-                    .map(
-                      (a) => DropdownMenuItem(
-                        value: a,
-                        child: Text(a, overflow: TextOverflow.ellipsis),
+                          ),
+                          const SizedBox(width: 4),
+                          const Text('Color', style: TextStyle(fontSize: 12)),
+                        ],
                       ),
-                    )
-                    .toList(),
-            onChanged: (v) {
-              setState(() {
-                _selectedAttendee = v!;
-              });
-              _applyFilters();
-            },
+                      deleteIcon: const Icon(Icons.close, size: 16),
+                      onDeleted: () {
+                        setState(() {
+                          activeFilters.remove(entry.key);
+                          _applyFilters();
+                        });
+                      },
+                    );
+                  }
+                  
+                  return Chip(
+                    label: Text(
+                      '${_getDisplayName(entry.key)}: ${entry.value.length > 15 ? '${entry.value.substring(0, 15)}...' : entry.value}',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    deleteIcon: const Icon(Icons.close, size: 16),
+                    onDeleted: () {
+                      setState(() {
+                        activeFilters.remove(entry.key);
+                        _applyFilters();
+                      });
+                    },
+                  );
+                }).toList(),
+              ],
+            ),
           ),
+          
+          // Clear all button
+          if (totalFilters > 1)
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  activeFilters.clear();
+                  searchQuery = '';
+                  _applyFilters();
+                });
+              },
+              child: const Text('Clear All'),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.all(8),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
         ],
       ),
     );
@@ -366,21 +389,23 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   Widget _buildScheduleList() {
     if (filteredTalks.isEmpty) {
       return CommonWidgets.emptyState(
-        message: 'No talks match your filters',
+        message: activeFilters.isEmpty && searchQuery.isEmpty
+            ? 'No upcoming events scheduled'
+            : 'No events match your filters',
         icon: Icons.event_busy,
-        onAction: () {
-          setState(() {
-            _selectedDay = 'All Dates';
-            _selectedTrack = 'All Tracks';
-            _selectedAttendee = 'All Attendees';
-            _searchQuery = '';
-            _searchController.clear();
-          });
-          _applyFilters();
-        },
+        onAction: activeFilters.isEmpty && searchQuery.isEmpty
+            ? null
+            : () {
+                setState(() {
+                  activeFilters.clear();
+                  searchQuery = '';
+                  _applyFilters();
+                });
+              },
         actionLabel: 'Clear Filters',
       );
     }
+    
     return ListView.builder(
       itemCount: filteredTalks.length,
       itemBuilder: (context, index) {
@@ -406,6 +431,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       },
     );
   }
+
+  // Your existing _buildTalkCard method remains unchanged
 
   Widget _buildTalkCard(Map<String, dynamic> talk) {
     final talkColor =
@@ -506,12 +533,20 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                             maxLines: 2,
                           ),
                         ),
+                        if (talk['isFavorite'] == true)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: Icon(Icons.star, color: Colors.amber, size: 20),
+                          ),
                         if (isAdmin &&
                             (talk['hasMissingRegistration'] == true ||
                                 talk['hasMissingCopyright'] == true))
-                          const Icon(
-                            Icons.warning,
-                            color: AppTheme.warningColor,
+                          const Padding(
+                            padding: EdgeInsets.only(left: 4),
+                            child: Icon(
+                              Icons.warning,
+                              color: AppTheme.warningColor,
+                            ),
                           ),
                       ],
                     ),
@@ -609,5 +644,23 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             ],
           ),
     );
+  }
+
+  String _getDisplayName(String filterType) {
+    switch (filterType) {
+      case 'day':
+        return 'Date';
+      case 'track':
+        return 'Track';
+      case 'speaker':
+        return 'Speaker';
+      case 'location':
+        return 'Location';
+      case 'colorCode':
+        return 'Color';
+      default:
+        // Capitalize the first letter
+        return filterType.substring(0, 1).toUpperCase() + filterType.substring(1);
+    }
   }
 }
