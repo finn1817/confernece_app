@@ -446,7 +446,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(talk['time'] ?? 'TBD', style: const TextStyle(fontWeight: FontWeight.bold)),
-                    if (talk['duration'] != null) Text(talk['duration'], style: AppTheme.smallTextStyle),
+                    if (talk['duration'] != null) Text(talk['duration'], style: Theme.of(context).textTheme.bodySmall),
                   ],
                 ),
               ),
@@ -475,7 +475,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text(talk['speaker'] ?? 'Unknown Speaker', style: AppTheme.bodyTextStyle),
+                    Text(talk['speaker'] ?? 'Unknown Speaker',
+                    style: Theme.of(context).textTheme.bodyMedium),
                     const SizedBox(height: 6),
                     Row(
                       children: [
@@ -485,7 +486,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                           color: AppTheme.textSecondaryColor,
                         ),
                         const SizedBox(width: 4),
-                        Text(talk['location'] ?? 'TBD', style: AppTheme.smallTextStyle),
+                        Text(talk['location'] ?? 'TBD', style: Theme.of(context).textTheme.bodySmall),
                         const SizedBox(width: 8),
                         trackTag,
                         if (count > 0)
