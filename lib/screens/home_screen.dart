@@ -249,7 +249,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             icon: const Icon(Icons.arrow_forward, size: 18),
                             label: const Text('See all favorites'),
                             onPressed: () {
-                              Navigator.pushNamed(context, AppRouter.schedule);
+                              // Navigate to favorites screen instead of schedule
+                              Navigator.pushNamed(context, AppRouter.favorites);
                             },
                           ),
                         ),
@@ -326,15 +327,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           icon: Icons.star,
                           label: 'Favorites',
                           onTap: () {
-                            // You could add a dedicated favorites page,
-                            // but for now just scroll to favorites section
+                            // Updated to use the Favorites screen
                             if (favoriteTalks.isEmpty) {
                               CommonWidgets.showNotificationBanner(
                                 context,
                                 message: 'Star talks in their detail view to add favorites',
                               );
                             } else {
-                              Navigator.pushNamed(context, AppRouter.schedule);
+                              // Use the router's navigation method
+                              AppRouter.navigateToFavorites(context);
                             }
                           },
                         ),

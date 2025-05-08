@@ -7,6 +7,7 @@ import 'screens/talk_detail_screen.dart';
 import 'screens/talk_form_screen.dart';
 import 'screens/user_management_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/favorites_screen.dart'; // Add this import
 import 'widgets/common_widgets.dart';
 import 'main.dart' as main;
 
@@ -17,6 +18,7 @@ class AppRouter {
   static const String talkForm        = '/talk-form';
   static const String userManagement  = '/users';
   static const String login           = '/login';
+  static const String favorites       = '/favorites';
 
   // Any route in here requires isAdminGlobal == true
   static const List<String> _adminRoutes = [
@@ -43,6 +45,10 @@ class AppRouter {
 
       case schedule:
         return MaterialPageRoute(builder: (_) => ScheduleScreen());
+        
+      case favorites:
+        // Update this line to use FavoritesScreen instead of ScheduleScreen
+        return MaterialPageRoute(builder: (_) => FavoritesScreen());
 
       case talkDetail:
         final args = settings.arguments as Map<String, dynamic>;
@@ -70,7 +76,7 @@ class AppRouter {
   static Route<dynamic> _checkAdminAndGenerateRoute(RouteSettings settings) {
     return MaterialPageRoute(builder: (context) {
       if (main.isAdminGlobal) {
-        // Admin is allowed – dispatch normally
+        // Admin is allowed -- dispatch normally
         switch (settings.name) {
           case talkForm:
             final args = settings.arguments as Map<String, dynamic>?;
@@ -88,7 +94,7 @@ class AppRouter {
             );
         }
       } else {
-        // Not admin – show error
+        // Not admin -- show error
         WidgetsBinding.instance.addPostFrameCallback((_) {
           Navigator.of(context).pop();
           CommonWidgets.showNotificationBanner(
@@ -143,5 +149,10 @@ class AppRouter {
 
   static void navigateToUserManagement(BuildContext ctx) {
     Navigator.pushNamed(ctx, userManagement);
+  }
+  
+  // Added navigation helper for favorites
+  static void navigateToFavorites(BuildContext ctx) {
+    Navigator.pushNamed(ctx, favorites);
   }
 }
